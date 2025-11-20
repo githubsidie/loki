@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>调试页面</title>
+</head>
+<body>
+    <h1>页面调试信息</h1>
+    <div id="debug-info"></div>
+    <button onclick="checkPage()">检查页面状态</button>
+    
+    <script>
+        function checkPage() {
+            const debugInfo = document.getElementById('debug-info');
+            let info = '';
+            
+            // 检查员工容器是否存在
+            const employeesContainer = document.getElementById('employees-container');
+            info += `员工容器存在: ${!!employeesContainer}<br>`;
+            if (employeesContainer) {
+                info += `员工容器子元素数量: ${employeesContainer.children.length}<br>`;
+                info += `员工容器内容: ${employeesContainer.innerHTML.substring(0, 200)}...<br>`;
+            }
+            
+            // 检查员工任务详情模态框是否存在
+            const modal = document.getElementById('employee-tasks-modal');
+            info += `员工任务模态框存在: ${!!modal}<br>`;
+            
+            // 检查Renderer对象是否存在
+            info += `Renderer对象存在: ${typeof Renderer !== 'undefined'}<br>`;
+            if (typeof Renderer !== 'undefined') {
+                info += `Renderer.showEmployeeTaskDetails存在: ${typeof Renderer.showEmployeeTaskDetails === 'function'}<br>`;
+            }
+            
+            // 检查DataManager对象是否存在
+            info += `DataManager对象存在: ${typeof DataManager !== 'undefined'}<br>`;
+            if (typeof DataManager !== 'undefined') {
+                info += `DataManager.getEmployees存在: ${typeof DataManager.getEmployees === 'function'}<br>`;
+                try {
+                    const employees = DataManager.getEmployees();
+                    info += `员工数量: ${employees.length}<br>`;
+                    if (employees.length > 0) {
+                        info += `第一个员工: ${employees[0].name} (ID: ${employees[0].id})<br>`;
+                    }
+                } catch (e) {
+                    info += `获取员工数据错误: ${e.message}<br>`;
+                }
+            }
+            
+            debugInfo.innerHTML = info;
+        }
+        
+        // 页面加载完成后自动检查
+        window.addEventListener('load', function() {
+            setTimeout(checkPage, 1000); // 延迟1秒执行，确保所有脚本加载完成
+        });
+    </script>
+</body>
+</html>

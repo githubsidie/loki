@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>任务提交功能测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>任务提交功能测试页面</h1>
+    
+    <div class="test-section">
+        <h2>功能状态检查</h2>
+        <button onclick="checkFeatures()">检查功能状态</button>
+        <div id="feature-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>模拟员工卡片点击</h2>
+        <p>点击下面的按钮模拟点击员工卡片，打开任务详情模态框：</p>
+        <button onclick="simulateEmployeeClick()">模拟点击张三</button>
+        <div id="simulation-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>快速导航</h2>
+        <p>或者直接访问主页面，然后点击任意员工卡片：</p>
+        <a href="/" target="_blank">打开主页面</a>
+    </div>
+
+    <script>
+        function checkFeatures() {
+            const status = document.getElementById('feature-status');
+            let html = '';
+            
+            // 检查必要的DOM元素
+            const elements = [
+                'employees-container',
+                'employee-tasks-modal', 
+                'employee-tasks-content',
+                'task-select',
+                'task-attachment',
+                'task-completion-note',
+                'submit-task-btn'
+            ];
+            
+            html += '<h3>DOM元素检查：</h3>';
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                html += `${id}: ${element ? '✅ 存在' : '❌ 不存在'}<br>`;
+            });
+            
+            // 检查JavaScript对象
+            html += '<h3>JavaScript对象检查：</h3>';
+            html += `DataManager: ${typeof DataManager !== 'undefined' ? '✅ 存在' : '❌ 不存在'}<br>`;
+            html += `Renderer: ${typeof Renderer !== 'undefined' ? '✅ 存在' : '❌ 不存在'}<br>`;
+            
+            if (typeof Renderer !== 'undefined') {
+                html += `Renderer.showEmployeeTaskDetails: ${typeof Renderer.showEmployeeTaskDetails === 'function' ? '✅ 存在' : '❌ 不存在'}<br>`;
+                html += `Renderer.bindTaskSubmissionEvents: ${typeof Renderer.bindTaskSubmissionEvents === 'function' ? '✅ 存在' : '❌ 不存在'}<br>`;
+            }
+            
+            // 检查员工数据
+            if (typeof DataManager !== 'undefined') {
+                try {
+                    const employees = DataManager.getEmployees();
+                    html += `<h3>员工数据：</h3>`;
+                    html += `员工总数: ${employees.length}<br>`;
+                    employees.slice(0, 3).forEach(emp => {
+                        html += `  - ${emp.name} (ID: ${emp.id})<br>`;
+                    });
+                    
+                    const tasks = DataManager.getTasks();
+                    const doingTasks = tasks.filter(t => t.status === 'doing');
+                    const pendingTasks = tasks.filter(t => t.status === 'pending');
+                    html += `<h3>任务数据：</h3>`;
+                    html += `总任务数: ${tasks.length}<br>`;
+                    html += `进行中任务: ${doingTasks.length}<br>`;
+                    html += `待接收任务: ${pendingTasks.length}<br>`;
+                } catch (e) {
+                    html += `<p class="error">获取数据错误: ${e.message}</p>`;
+                }
+            }
+            
+            status.innerHTML = html;
+        }
+        
+        function simulateEmployeeClick() {
+            const result = document.getElementById('simulation-result');
+            
+            if (typeof DataManager === 'undefined' || typeof Renderer === 'undefined') {
+                result.innerHTML = '<p class="error">必要对象未加载，请确保在主页面中测试</p>';
+                return;
+            }
+            
+            try {
+                const employees = DataManager.getEmployees();
+                const tasks = DataManager.getTasks();
+                
+                if (employees.length === 0) {
+                    result.innerHTML = '<p class="error">没有员工数据</p>';
+                    return;
+                }
+                
+                // 找到张三
+                const zhangsan = employees.find(emp => emp.id === '1001');
+                if (!zhangsan) {
+                    result.innerHTML = '<p class="error">未找到张三</p>';
+                    return;
+                }
+                
+                const zhangsanTasks = tasks.filter(task => task.assignee === '1001');
+                
+                result.innerHTML = `
+                    <p class="success">✅ 找到张三，任务数: ${zhangsanTasks.length}</p>
+                    <p>张三的任务:</p>
+                    <ul>
+                        ${zhangsanTasks.map(task => `<li>${task.name} (${task.status})</li>`).join('')}
+                    </ul>
+                    <p><strong>在主页面中点击张三的员工卡片即可看到任务提交功能！</strong></p>
+                `;
+                
+            } catch (e) {
+                result.innerHTML = `<p class="error">模拟失败: ${e.message}</p>`;
+            }
+        }
+        
+        // 页面加载时自动检查
+        window.addEventListener('load', function() {
+            setTimeout(checkFeatures, 500);
+        });
+    </script>
+</body>
+</html>

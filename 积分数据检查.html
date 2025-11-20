@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分数据检查</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            font-weight: bold;
+        }
+        .console {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>积分数据检查工具</h1>
+        
+        <div class="section">
+            <h3>数据检查控制台</h3>
+            <div id="console" class="console"></div>
+            <button class="btn" onclick="runDataCheck()">运行数据检查</button>
+            <button class="btn" onclick="clearConsole()">清空控制台</button>
+        </div>
+
+        <div class="section">
+            <h3>员工积分排名</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>员工姓名</th>
+                        <th>部门</th>
+                        <th>积分</th>
+                        <th>任务数</th>
+                        <th>平均积分/任务</th>
+                    </tr>
+                </thead>
+                <tbody id="employee-ranking">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h3>朱元璋任务详情</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>任务ID</th>
+                        <th>任务名称</th>
+                        <th>状态</th>
+                        <th>优先级</th>
+                        <th>积分</th>
+                        <th>开始时间</th>
+                        <th>结束时间</th>
+                    </tr>
+                </thead>
+                <tbody id="zhuyuanzhang-tasks">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h3>图表显示数据</h3>
+            <div id="chart-data-info"></div>
+        </div>
+    </div>
+
+    <script src="未命名.js"></script>
+    <script>
+        function log(message, type = 'info') {
+            const console = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'warning' ? 'orange' : 'black';
+            console.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console').innerHTML = '';
+        }
+
+        function runDataCheck() {
+            log('开始数据检查...');
+            
+            try {
+                // 获取基础数据
+                const employees = DataManager.getEmployees();
+                const tasks = DataManager.getTasks();
+                
+                log(`员工总数: ${employees.length}`);
+                log(`任务总数: ${tasks.length}`);
+                
+                // 查找朱元璋
+                const zhuyuanzhang = employees.find(emp => emp.id === '2003');
+                if (!zhuyuanzhang) {
+                    log('错误: 未找到朱元璋员工数据', 'error');
+                    return;
+                }
+                
+                log(`找到朱元璋: ${zhuyuanzhang.name}, 部门: ${zhuyuanzhang.department}`);
+                
+                // 获取朱元璋的任务
+                const zhuyuanzhangTasks = tasks.filter(task => task.assignee === '2003');
+                log(`朱元璋任务数: ${zhuyuanzhangTasks.length}`);
+                
+                // 计算积分
+                let totalPoints = 0;
+                let completedTasks = 0;
+                
+                zhuyuanzhangTasks.forEach(task => {
+                    if (task.status === 'done') {
+                        totalPoints += parseInt(task.points) || 0;
+                        completedTasks++;
+                    }
+                });
+                
+                log(`朱元璋已完成任务: ${completedTasks}, 总积分: ${totalPoints}`);
+                
+                // 获取周期数据
+                const periodData = DataManager.getPeriodPointsData(tasks, employees);
+                const employeeStats = periodData.employeeStats;
+                
+                log(`周期数据统计完成，员工统计数: ${Object.keys(employeeStats).length}`);
+                
+                // 显示员工排名
+                displayEmployeeRanking(employeeStats, employees);
+                
+                // 显示朱元璋任务详情
+                displayZhuyuanzhangTasks(zhuyuanzhangTasks);
+                
+                // 显示图表数据信息
+                displayChartDataInfo(employeeStats);
+                
+                // 检查图表显示
+                const employeeData = Object.values(employeeStats)
+                    .sort((a, b) => b.points - a.points)
+                    .slice(0, 8); // 图表显示前8名
+                
+                log(`图表将显示前8名员工: ${employeeData.map(emp => `${emp.name}(${emp.points}分)`).join(', ')}`);
+                
+                    const zhuyuanzhangInChart = employeeData.find(emp => emp.name === '朱元璋');
+                if (zhuyuanzhangInChart) {
+                    log(`朱元璋在图表中显示，排名: ${employeeData.findIndex(emp => emp.name === '朱元璋') + 1}`, 'info');
+                } else {
+                    log('警告: 朱元璋不在前8名，不会在图表中显示', 'warning');
+                }
+                
+            } catch (error) {
+                log(`数据检查错误: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function displayEmployeeRanking(employeeStats, employees) {
+            const rankingBody = document.getElementById('employee-ranking');
+            rankingBody.innerHTML = '';
+            
+            const sortedEmployees = Object.values(employeeStats)
+                .sort((a, b) => b.points - a.points)
+                .map((emp, index) => ({
+                    ...emp,
+                    rank: index + 1
+                }));
+            
+            sortedEmployees.forEach(emp => {
+                const row = document.createElement('tr');
+                const isZhuyuanzhang = emp.name === '朱元璋';
+                
+                if (isZhuyuanzhang) {
+                    row.className = 'highlight';
+                }
+                
+                const avgPointsPerTask = emp.taskCount > 0 ? Math.round(emp.points / emp.taskCount) : 0;
+                
+                row.innerHTML = `
+                    <td>${emp.rank}</td>
+                    <td>${emp.name}</td>
+                    <td>${getEmployeeDepartment(emp.name, employees)}</td>
+                    <td>${emp.points}</td>
+                    <td>${emp.taskCount}</td>
+                    <td>${avgPointsPerTask}</td>
+                `;
+                
+                rankingBody.appendChild(row);
+            });
+        }
+
+        function displayZhuyuanzhangTasks(zhuyuanzhangTasks) {
+            const tasksBody = document.getElementById('zhuyuanzhang-tasks');
+            tasksBody.innerHTML = '';
+            
+            zhuyuanzhangTasks.forEach(task => {
+                const row = document.createElement('tr');
+                const isCompleted = task.status === 'done';
+                
+                if (isCompleted) {
+                    row.style.backgroundColor = '#d4edda';
+                }
+                
+                row.innerHTML = `
+                    <td>${task.id}</td>
+                    <td>${task.name}</td>
+                    <td>${getStatusText(task.status)}</td>
+                    <td>${task.priority}</td>
+                    <td>${task.points}</td>
+                    <td>${formatDateTime(task.startTime)}</td>
+                    <td>${formatDateTime(task.endTime)}</td>
+                `;
+                
+                tasksBody.appendChild(row);
+            });
+        }
+
+        function displayChartDataInfo(employeeStats) {
+            const chartInfo = document.getElementById('chart-data-info');
+            const employeeData = Object.values(employeeStats)
+                .sort((a, b) => b.points - a.points)
+                .slice(0, 8);
+            
+            let html = '<h4>图表将显示以下员工（前8名）:</h4><ul>';
+            
+            employeeData.forEach((emp, index) => {
+                const isZhuyuanzhang = emp.name === '朱元璋';
+                const highlight = isZhuyuanzhang ? ' style="color: red; font-weight: bold;"' : '';
+                html += `<li${highlight}>${index + 1}. ${emp.name} - ${emp.points}分 (${emp.taskCount}个任务)</li>`;
+            });
+            
+            html += '</ul>';
+            
+            // 显示朱元璋的排名情况
+            const allEmployees = Object.values(employeeStats).sort((a, b) => b.points - a.points);
+            const zhuyuanzhangRank = allEmployees.findIndex(emp => emp.name === '朱元璋') + 1;
+            
+            if (zhuyuanzhangRank > 8) {
+                html += `<p style="color: orange;">朱元璋实际排名: 第${zhuyuanzhangRank}名，不在前8名所以不显示在图表中</p>`;
+            }
+            
+            chartInfo.innerHTML = html;
+        }
+
+        function getEmployeeDepartment(employeeName, employees) {
+            const employee = employees.find(emp => emp.name === employeeName);
+            return employee ? employee.department : '未知部门';
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待接收',
+                'doing': '进行中',
+                'done': '已完成'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatDateTime(dateTimeStr) {
+            if (!dateTimeStr) return '-';
+            const date = new Date(dateTimeStr);
+            return date.toLocaleString('zh-CN');
+        }
+
+        // 页面加载完成后自动运行检查
+        window.addEventListener('load', function() {
+            log('页面加载完成，开始自动数据检查...');
+            setTimeout(runDataCheck, 1000);
+        });
+    </script>
+</body>
+</html>

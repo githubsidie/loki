@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务提交功能测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-title {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .modal-check {
+            display: none;
+            margin: 10px 0;
+            padding: 15px;
+            background-color: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 4px;
+        }
+        .modal-check.active {
+            display: block;
+        }
+        #task-submission-section {
+            border: 2px solid #28a745;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background-color: #f8fff9;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>任务提交功能测试</h1>
+        
+        <div class="test-section">
+            <div class="test-title">1. 基础环境检查</div>
+            <div class="test-step">
+                <strong>检查内容：</strong>验证页面元素是否存在
+            </div>
+            <div id="basic-check" class="test-result"></div>
+            <button class="test-button" onclick="checkBasicElements()">执行基础检查</button>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">2. 员工数据验证</div>
+            <div class="test-step">
+                <strong>检查内容：</strong>验证员工数据是否正确加载
+            </div>
+            <div id="employee-check" class="test-result"></div>
+            <button class="test-button" onclick="checkEmployeeData()">检查员工数据</button>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">3. 模拟员工点击</div>
+            <div class="test-step">
+                <strong>操作步骤：</strong>
+                <ol>
+                    <li>等待员工卡片渲染完成</li>
+                    <li>模拟点击第一个员工卡片</li>
+                    <li>检查员工任务详情模态框是否显示</li>
+                    <li>验证任务提交部分是否存在</li>
+                </ol>
+            </div>
+            <div id="click-result" class="test-result"></div>
+            <button class="test-button" onclick="simulateEmployeeClick()">模拟员工点击</button>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">4. 模态框内容检查</div>
+            <div class="test-step">
+                <strong>检查内容：</strong>验证模态框中的任务提交功能
+            </div>
+            <div id="modal-check" class="modal-check">
+                <h4>模态框内容检查结果：</h4>
+                <div id="modal-content-result"></div>
+            </div>
+            <div id="submission-check" class="test-result"></div>
+            <button class="test-button" onclick="checkModalContent()">检查模态框内容</button>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">5. 任务提交功能验证</div>
+            <div class="test-step">
+                <strong>验证内容：</strong>
+                <ul>
+                    <li>任务选择下拉框是否显示进行中和待接收任务</li>
+                    <li>文件上传控件是否正常工作</li>
+                    <li>完成说明文本框是否可用</li>
+                    <li>提交和重置按钮是否存在</li>
+                </ul>
+            </div>
+            <div id="submission-function-check" class="test-result"></div>
+            <button class="test-button" onclick="checkSubmissionFunctions()">验证任务提交功能</button>
+        </div>
+    </div>
+
+    <script src="未命名.js"></script>
+    <script>
+        // 基础元素检查
+        function checkBasicElements() {
+            const result = document.getElementById('basic-check');
+            let html = '';
+            
+            // 检查关键元素
+            const elements = [
+                'employees-container',
+                'employee-tasks-modal',
+                'employee-tasks-title',
+                'employee-tasks-content'
+            ];
+            
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    html += `<div class="success">✓ ${id} 元素存在</div>`;
+                } else {
+                    html += `<div class="error">✗ ${id} 元素不存在</div>`;
+                }
+            });
+            
+            result.innerHTML = html;
+        }
+
+        // 员工数据检查
+        function checkEmployeeData() {
+            const result = document.getElementById('employee-check');
+            try {
+                const employees = DataManager.getEmployees();
+                if (employees && employees.length > 0) {
+                    result.innerHTML = `<div class="success">✓ 员工数据加载成功，共 ${employees.length} 名员工</div>`;
+                    employees.forEach(emp => {
+                        result.innerHTML += `<div>员工: ${emp.name} (ID: ${emp.id})</div>`;
+                    });
+                } else {
+                    result.innerHTML = `<div class="error">✗ 员工数据为空或未加载</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">✗ 员工数据检查失败: ${error.message}</div>`;
+            }
+        }
+
+        // 模拟员工点击
+        function simulateEmployeeClick() {
+            const result = document.getElementById('click-result');
+            
+            try {
+                // 等待页面完全加载
+                setTimeout(() => {
+                    // 获取第一个员工卡片
+                    const employeeCards = document.querySelectorAll('.employee-card');
+                    if (employeeCards.length > 0) {
+                        result.innerHTML = `<div class="success">✓ 找到 ${employeeCards.length} 个员工卡片</div>`;
+                        
+                        // 模拟点击第一个员工卡片
+                        employeeCards[0].click();
+                        result.innerHTML += `<div class="success">✓ 已模拟点击第一个员工卡片</div>`;
+                        
+                        // 检查模态框是否显示
+                        setTimeout(() => {
+                            const modal = document.getElementById('employee-tasks-modal');
+                            if (modal && modal.classList.contains('active')) {
+                                result.innerHTML += `<div class="success">✓ 员工任务详情模态框已显示</div>`;
+                                document.getElementById('modal-check').classList.add('active');
+                            } else {
+                                result.innerHTML += `<div class="error">✗ 员工任务详情模态框未显示</div>`;
+                            }
+                        }, 1000);
+                        
+                    } else {
+                        result.innerHTML = `<div class="error">✗ 未找到员工卡片，可能页面未完全加载</div>`;
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                result.innerHTML = `<div class="error">✗ 模拟点击失败: ${error.message}</div>`;
+            }
+        }
+
+        // 检查模态框内容
+        function checkModalContent() {
+            const result = document.getElementById('modal-content-result');
+            const submissionResult = document.getElementById('submission-check');
+            
+            try {
+                // 检查模态框内容
+                const content = document.getElementById('employee-tasks-content');
+                if (content) {
+                    result.innerHTML = `<div class="success">✓ 模态框内容区域存在</div>`;
+                    
+                    // 检查任务提交部分
+                    const submissionSection = document.getElementById('task-submission-section');
+                    if (submissionSection) {
+                        submissionResult.innerHTML = `<div class="success">✓ 任务提交部分已找到！</div>`;
+                        submissionResult.innerHTML += `<div>任务提交区域内容长度: ${submissionSection.innerHTML.length} 字符</div>`;
+                        
+                        // 显示任务提交区域的内容预览
+                        const preview = submissionSection.innerHTML.substring(0, 200) + '...';
+                        submissionResult.innerHTML += `<div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 3px;">
+                            <strong>内容预览：</strong><br>
+                            ${preview}
+                        </div>`;
+                        
+                    } else {
+                        submissionResult.innerHTML = `<div class="error">✗ 未找到任务提交部分 (task-submission-section)</div>`;
+                        
+                        // 检查是否有其他相关元素
+                        const taskSelect = document.getElementById('task-select');
+                        const fileUpload = document.getElementById('task-files');
+                        const completionNote = document.getElementById('completion-note');
+                        
+                        if (taskSelect || fileUpload || completionNote) {
+                            submissionResult.innerHTML += `<div class="warning">⚠ 发现部分任务提交相关元素，但主容器未找到</div>`;
+                        }
+                    }
+                } else {
+                    result.innerHTML = `<div class="error">✗ 模态框内容区域不存在</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">✗ 模态框内容检查失败: ${error.message}</div>`;
+            }
+        }
+
+        // 验证任务提交功能
+        function checkSubmissionFunctions() {
+            const result = document.getElementById('submission-function-check');
+            
+            try {
+                // 检查任务选择下拉框
+                const taskSelect = document.getElementById('task-select');
+                if (taskSelect) {
+                    result.innerHTML = `<div class="success">✓ 任务选择下拉框存在</div>`;
+                    result.innerHTML += `<div>选项数量: ${taskSelect.options.length}</div>`;
+                    
+                    // 显示选项内容
+                    let optionsHtml = '<div style="margin: 5px 0;"><strong>任务选项：</strong></div>';
+                    for (let i = 0; i < taskSelect.options.length; i++) {
+                        optionsHtml += `<div style="margin-left: 20px;">${i}: ${taskSelect.options[i].text} (值: ${taskSelect.options[i].value})</div>`;
+                    }
+                    result.innerHTML += optionsHtml;
+                } else {
+                    result.innerHTML = `<div class="error">✗ 任务选择下拉框不存在</div>`;
+                }
+                
+                // 检查文件上传控件
+                const fileUpload = document.getElementById('task-files');
+                if (fileUpload) {
+                    result.innerHTML += `<div class="success">✓ 文件上传控件存在</div>`;
+                } else {
+                    result.innerHTML += `<div class="error">✗ 文件上传控件不存在</div>`;
+                }
+                
+                // 检查完成说明文本框
+                const completionNote = document.getElementById('completion-note');
+                if (completionNote) {
+                    result.innerHTML += `<div class="success">✓ 完成说明文本框存在</div>`;
+                } else {
+                    result.innerHTML += `<div class="error">✗ 完成说明文本框不存在</div>`;
+                }
+                
+                // 检查提交按钮
+                const submitBtn = document.getElementById('submit-task-btn');
+                if (submitBtn) {
+                    result.innerHTML += `<div class="success">✓ 提交按钮存在</div>`;
+                } else {
+                    result.innerHTML += `<div class="error">✗ 提交按钮不存在</div>`;
+                }
+                
+                // 检查重置按钮
+                const resetBtn = document.getElementById('reset-task-form');
+                if (resetBtn) {
+                    result.innerHTML += `<div class="success">✓ 重置按钮存在</div>`;
+                } else {
+                    result.innerHTML += `<div class="error">✗ 重置按钮不存在</div>`;
+                }
+                
+            } catch (error) {
+                result.innerHTML = `<div class="error">✗ 任务提交功能验证失败: ${error.message}</div>`;
+            }
+        }
+
+        // 页面加载完成后自动执行基础检查
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                checkBasicElements();
+                checkEmployeeData();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

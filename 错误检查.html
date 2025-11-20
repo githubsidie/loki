@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript错误检查</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .error { color: red; }
+        .success { color: green; }
+        #errors { background: #ffe6e6; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        #logs { background: #f0f0f0; padding: 10px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>JavaScript错误检查</h1>
+    
+    <div id="errors"></div>
+    <div id="logs"></div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // 捕获错误
+        window.addEventListener('error', function(event) {
+            const errorsDiv = document.getElementById('errors');
+            errorsDiv.innerHTML += `<div class="error">错误: ${event.message} 在 ${event.filename}:${event.lineno}:${event.colno}</div>`;
+        });
+        
+        // 捕获未处理的Promise拒绝
+        window.addEventListener('unhandledrejection', function(event) {
+            const errorsDiv = document.getElementById('errors');
+            errorsDiv.innerHTML += `<div class="error">未处理的Promise拒绝: ${event.reason}</div>`;
+        });
+        
+        // 重定向console.log
+        const logsDiv = document.getElementById('logs');
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logsDiv.textContent += args.join(' ') + '\n';
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        };
+        
+        console.log('错误检查页面已加载');
+        console.log('正在加载未命名.js...');
+    </script>
+    
+    <script src="未命名.js"></script>
+    
+    <script>
+        console.log('未命名.js已加载');
+        console.log('TaskSubmission对象状态:', typeof window.TaskSubmission);
+        
+        if (window.TaskSubmission) {
+            console.log('TaskSubmission.init方法存在:', typeof window.TaskSubmission.init === 'function');
+            console.log('TaskSubmission.bindEvents方法存在:', typeof window.TaskSubmission.bindEvents === 'function');
+            
+            try {
+                window.TaskSubmission.init();
+                console.log('TaskSubmission.init() 执行成功');
+            } catch (error) {
+                console.log('TaskSubmission.init() 执行失败:', error.message);
+            }
+        } else {
+            console.log('TaskSubmission对象不存在');
+        }
+        
+        // 检查DOM元素
+        setTimeout(() => {
+            console.log('DOM元素检查:');
+            console.log('submission-employee:', document.getElementById('submission-employee') ? '存在' : '不存在');
+            console.log('submission-task:', document.getElementById('submission-task') ? '存在' : '不存在');
+            console.log('submission-attachment:', document.getElementById('submission-attachment') ? '存在' : '不存在');
+            console.log('submission-note:', document.getElementById('submission-note') ? '存在' : '不存在');
+            console.log('task-submission-form:', document.getElementById('task-submission-form') ? '存在' : '不存在');
+        }, 1000);
+    </script>
+</body>
+</html>

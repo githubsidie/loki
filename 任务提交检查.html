@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务提交功能检查</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .check-item { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeeba; }
+        button { margin: 5px; padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>任务提交功能检查</h1>
+    
+    <div id="check-results"></div>
+    
+    <div style="margin-top: 20px;">
+        <button onclick="checkBasicElements()">检查基本元素</button>
+        <button onclick="checkEmployeeData()">检查员工数据</button>
+        <button onclick="simulateEmployeeClick()">模拟员工点击</button>
+        <button onclick="checkModalContent()">检查模态框内容</button>
+    </div>
+
+    <script src="未命名.js"></script>
+    <script>
+        function addCheckResult(title, status, message) {
+            const results = document.getElementById('check-results');
+            const div = document.createElement('div');
+            div.className = `check-item ${status}`;
+            div.innerHTML = `<strong>${title}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+
+        function checkBasicElements() {
+            document.getElementById('check-results').innerHTML = '';
+            
+            // 检查员工容器
+            const employeeContainer = document.getElementById('employee-container');
+            if (employeeContainer) {
+                addCheckResult('员工容器', 'success', '存在');
+            } else {
+                addCheckResult('员工容器', 'error', '不存在');
+            }
+            
+            // 检查模态框
+            const modal = document.getElementById('employee-tasks-modal');
+            if (modal) {
+                addCheckResult('员工任务模态框', 'success', '存在');
+            } else {
+                addCheckResult('员工任务模态框', 'error', '不存在');
+            }
+            
+            // 检查JavaScript对象
+            if (typeof Renderer !== 'undefined') {
+                addCheckResult('Renderer对象', 'success', '已加载');
+                
+                if (typeof Renderer.showEmployeeTaskDetails === 'function') {
+                    addCheckResult('showEmployeeTaskDetails方法', 'success', '已定义');
+                } else {
+                    addCheckResult('showEmployeeTaskDetails方法', 'error', '未定义');
+                }
+                
+                if (typeof Renderer.bindTaskSubmissionEvents === 'function') {
+                    addCheckResult('bindTaskSubmissionEvents方法', 'success', '已定义');
+                } else {
+                    addCheckResult('bindTaskSubmissionEvents方法', 'error', '未定义');
+                }
+            } else {
+                addCheckResult('Renderer对象', 'error', '未加载');
+            }
+        }
+
+        function checkEmployeeData() {
+            if (typeof DataManager !== 'undefined') {
+                const employees = DataManager.getEmployees();
+                const tasks = DataManager.getTasks();
+                
+                addCheckResult('员工数据', 'success', `找到 ${employees.length} 名员工`);
+                addCheckResult('任务数据', 'success', `找到 ${tasks.length} 个任务`);
+                
+                if (employees.length > 0) {
+                    const firstEmployee = employees[0];
+                    const employeeTasks = tasks.filter(t => t.assignee === firstEmployee.id);
+                    addCheckResult('第一个员工任务', 'success', `${firstEmployee.name} 有 ${employeeTasks.length} 个任务`);
+                }
+            } else {
+                addCheckResult('DataManager', 'error', '未加载');
+            }
+        }
+
+        function simulateEmployeeClick() {
+            if (typeof DataManager !== 'undefined' && typeof Renderer !== 'undefined') {
+                const employees = DataManager.getEmployees();
+                const tasks = DataManager.getTasks();
+                
+                if (employees.length > 0) {
+                    const firstEmployee = employees[0];
+                    const employeeTasks = tasks.filter(t => t.assignee === firstEmployee.id);
+                    
+                    // 模拟点击员工卡片
+                    Renderer.showEmployeeTaskDetails(firstEmployee, employeeTasks);
+                    addCheckResult('模拟点击', 'success', `已触发 ${firstEmployee.name} 的任务详情`);
+                    
+                    // 检查模态框内容
+                    setTimeout(() => {
+                        const modal = document.getElementById('employee-tasks-modal');
+                        const taskSubmissionSection = document.querySelector('.task-submission-section');
+                        
+                        if (modal && modal.classList.contains('active')) {
+                            addCheckResult('模态框状态', 'success', '已显示');
+                            
+                            if (taskSubmissionSection) {
+                                addCheckResult('任务提交区域', 'success', '已找到');
+                            } else {
+                                addCheckResult('任务提交区域', 'error', '未找到');
+                            }
+                        } else {
+                            addCheckResult('模态框状态', 'error', '未显示');
+                        }
+                    }, 1000);
+                }
+            }
+        }
+
+        function checkModalContent() {
+            const modal = document.getElementById('employee-tasks-modal');
+            if (modal && modal.classList.contains('active')) {
+                const taskSelect = document.getElementById('task-select');
+                const fileInput = document.getElementById('task-attachment');
+                const submitBtn = document.getElementById('submit-task-btn');
+                const resetBtn = document.getElementById('reset-submission-btn');
+                
+                if (taskSelect) addCheckResult('任务选择下拉框', 'success', '存在');
+                else addCheckResult('任务选择下拉框', 'error', '不存在');
+                
+                if (fileInput) addCheckResult('文件上传控件', 'success', '存在');
+                else addCheckResult('文件上传控件', 'error', '不存在');
+                
+                if (submitBtn) addCheckResult('提交按钮', 'success', '存在');
+                else addCheckResult('提交按钮', 'error', '不存在');
+                
+                if (resetBtn) addCheckResult('重置按钮', 'success', '存在');
+                else addCheckResult('重置按钮', 'error', '不存在');
+            } else {
+                addCheckResult('模态框状态', 'warning', '请先模拟员工点击来显示模态框');
+            }
+        }
+
+        // 页面加载时自动检查基本元素
+        window.onload = function() {
+            setTimeout(() => {
+                checkBasicElements();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

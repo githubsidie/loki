@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务提交完整功能测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, textarea, input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        textarea { height: 100px; resize: vertical; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        #console { background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; margin: 20px 0; border: 1px solid #dee2e6; }
+        .uploaded-files { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; }
+        .uploaded-file-item { display: flex; justify-content: space-between; align-items: center; padding: 5px; margin: 5px 0; background: white; border-radius: 3px; }
+        .file-remove-btn { background: #dc3545; color: white; padding: 5px 10px; font-size: 12px; }
+        .test-section { background: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .hidden { display: none; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 5px; color: white; z-index: 1000; }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>任务提交完整功能测试</h1>
+        
+        <div id="status" class="status info">
+            正在加载任务提交模块...
+        </div>
+        
+        <!-- 任务提交表单 -->
+        <div class="form-section">
+            <h2>任务提交表单</h2>
+            <form id="task-submission-form">
+                <div class="form-group">
+                    <label for="submission-employee">选择员工：</label>
+                    <select id="submission-employee">
+                        <option value="">请选择员工</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="submission-task">选择任务：</label>
+                    <select id="submission-task">
+                        <option value="">请先选择员工</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="submission-note">完成说明：</label>
+                    <textarea id="submission-note" placeholder="请描述任务完成情况..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="submission-attachment">附件上传：</label>
+                    <input type="file" id="submission-attachment" multiple accept="*/*">
+                </div>
+                
+                <div id="submission-uploaded-files" class="uploaded-files hidden">
+                    <!-- 上传的文件将显示在这里 -->
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" id="task-submission-btn" class="btn-success">提交任务</button>
+                    <button type="button" id="submission-cancel-btn" class="btn-secondary">取消</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 测试控制面板 -->
+        <div class="test-section">
+            <h3>测试控制面板</h3>
+            <button class="btn-primary" onclick="runFullTest()">运行完整测试</button>
+            <button class="btn-secondary" onclick="checkModuleStatus()">检查模块状态</button>
+            <button class="btn-secondary" onclick="testEmployeeLoading()">测试员工加载</button>
+            <button class="btn-secondary" onclick="testTaskLoading()">测试任务加载</button>
+            <button class="btn-secondary" onclick="clearConsole()">清空控制台</button>
+        </div>
+        
+        <!-- 控制台输出 -->
+        <div id="console"></div>
+        
+        <!-- 测试结果 -->
+        <div id="test-results"></div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="未命名.js"></script>
+    
+    <script>
+        // 重定向console.log到页面
+        const consoleDiv = document.getElementById('console');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' ');
+            consoleDiv.textContent += `[LOG] ${new Date().toLocaleTimeString()} - ${message}\n`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' ');
+            consoleDiv.textContent += `[ERROR] ${new Date().toLocaleTimeString()} - ${message}\n`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+        
+        // 捕获错误
+        window.addEventListener('error', function(event) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status error';
+            statusDiv.textContent = `JavaScript错误: ${event.message} (文件: ${event.filename}, 行: ${event.lineno})`;
+            console.error(`全局错误捕获: ${event.message}`, event);
+        });
+        
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error(`未处理的Promise拒绝: ${event.reason}`, event);
+        });
+        
+        // 模拟Renderer.showToast函数（如果未定义）
+        if (typeof window.Renderer === 'undefined' || typeof window.Renderer.showToast !== 'function') {
+            window.Renderer = window.Renderer || {};
+            window.Renderer.showToast = function(message, type = 'info') {
+                console.log(`Toast: [${type}] ${message}`);
+                // 创建简单的toast通知
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 3000);
+            };
+        }
+        
+        // 模拟DataManager（如果未定义）
+        if (typeof window.DataManager === 'undefined') {
+            window.DataManager = {
+                employees: [
+                    {id: 'emp1', name: '张三', department: '技术部'},
+                    {id: 'emp2', name: '李四', department: '市场部'},
+                    {id: 'emp3', name: '王五', department: '销售部'}
+                ],
+                tasks: [
+                    {id: 'task1', name: '开发新功能', assignee: 'emp1', status: 'doing', points: 10},
+                    {id: 'task2', name: '客户调研', assignee: 'emp2', status: 'doing', points: 8},
+                    {id: 'task3', name: '销售报告', assignee: 'emp3', status: 'pending', points: 5}
+                ],
+                getEmployees: function() {
+                    return this.employees;
+                },
+                getTasks: function() {
+                    return this.tasks;
+                },
+                saveTasks: function(tasks) {
+                    this.tasks = tasks;
+                    console.log('任务已保存:', tasks);
+                }
+            };
+        }
+        
+        // 模拟Statistics和PointsStatistics（如果未定义）
+        if (typeof window.Statistics === 'undefined') {
+            window.Statistics = {
+                updateCharts: function() {
+                    console.log('Statistics.updateCharts() 被调用');
+                }
+            };
+        }
+        
+        if (typeof window.PointsStatistics === 'undefined') {
+            window.PointsStatistics = {
+                updateCharts: function() {
+                    console.log('PointsStatistics.updateCharts() 被调用');
+                }
+            };
+        }
+        
+        function clearConsole() {
+            consoleDiv.textContent = '';
+        }
+        
+        function addTestResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `status ${type}`;
+            resultDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        function checkModuleStatus() {
+            console.log('=== 检查任务提交模块状态 ===');
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                // 检查TaskSubmission对象
+                if (typeof window.TaskSubmission === 'undefined') {
+                    throw new Error('TaskSubmission对象未定义');
+                }
+                console.log('✅ TaskSubmission对象存在');
+                
+                // 检查必要方法
+                const requiredMethods = ['init', 'bindEvents', 'loadEmployees', 'submitTask', 'handleFileUpload'];
+                const missingMethods = [];
+                
+                requiredMethods.forEach(method => {
+                    if (typeof window.TaskSubmission[method] !== 'function') {
+                        missingMethods.push(method);
+                    } else {
+                        console.log(`✅ ${method}() 方法存在`);
+                    }
+                });
+                
+                if (missingMethods.length > 0) {
+                    throw new Error(`缺少必要方法: ${missingMethods.join(', ')}`);
+                }
+                
+                // 检查DOM元素
+                const requiredElements = ['submission-employee', 'submission-task', 'task-submission-form', 'submission-note', 'submission-attachment'];
+                const missingElements = [];
+                
+                requiredElements.forEach(id => {
+                    if (!document.getElementById(id)) {
+                        missingElements.push(id);
+                    }
+                });
+                
+                if (missingElements.length > 0) {
+                    throw new Error(`缺少必要DOM元素: ${missingElements.join(', ')}`);
+                }
+                
+                console.log('✅ 所有必要DOM元素存在');
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '任务提交模块状态正常，所有组件就绪！';
+                addTestResult('模块状态检查通过', 'success');
+                
+                return true;
+                
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `模块检查失败: ${error.message}`;
+                addTestResult(`模块检查失败: ${error.message}`, 'error');
+                console.error(`❌ 模块检查失败: ${error.message}`);
+                return false;
+            }
+        }
+        
+        function testEmployeeLoading() {
+            console.log('=== 测试员工数据加载 ===');
+            
+            try {
+                if (typeof window.TaskSubmission.loadEmployees === 'function') {
+                    console.log('正在加载员工数据...');
+                    window.TaskSubmission.loadEmployees();
+                    addTestResult('员工数据加载成功', 'success');
+                    
+                    // 检查员工选择框
+                    setTimeout(() => {
+                        const employeeSelect = document.getElementById('submission-employee');
+                        if (employeeSelect && employeeSelect.options.length > 1) {
+                            console.log(`✅ 员工选择框已填充 ${employeeSelect.options.length - 1} 名员工`);
+                        } else {
+                            console.log('⚠️ 员工选择框未正确填充');
+                        }
+                    }, 500);
+                    
+                } else {
+                    throw new Error('loadEmployees方法不存在');
+                }
+            } catch (error) {
+                addTestResult(`员工数据加载失败: ${error.message}`, 'error');
+                console.error('员工数据加载失败:', error);
+            }
+        }
+        
+        function testTaskLoading() {
+            console.log('=== 测试任务数据加载 ===');
+            
+            try {
+                // 先选择一个员工
+                const employeeSelect = document.getElementById('submission-employee');
+                if (employeeSelect && employeeSelect.options.length > 1) {
+                    employeeSelect.value = employeeSelect.options[1].value;
+                    console.log(`已选择员工: ${employeeSelect.options[1].text}`);
+                    
+                    // 然后加载任务
+                    if (typeof window.TaskSubmission.loadEmployeeTasks === 'function') {
+                        window.TaskSubmission.loadEmployeeTasks(employeeSelect.value);
+                        addTestResult('任务数据加载函数已调用', 'success');
+                        
+                        // 检查任务选择框
+                        setTimeout(() => {
+                            const taskSelect = document.getElementById('submission-task');
+                            if (taskSelect && taskSelect.options.length > 1) {
+                                console.log(`✅ 任务选择框已填充 ${taskSelect.options.length - 1} 个任务`);
+                            } else {
+                                console.log('⚠️ 任务选择框未正确填充');
+                            }
+                        }, 500);
+                    }
+                } else {
+                    console.log('⚠️ 请先加载员工数据');
+                    addTestResult('请先选择员工', 'info');
+                }
+            } catch (error) {
+                addTestResult(`任务数据加载失败: ${error.message}`, 'error');
+                console.error('任务数据加载失败:', error);
+            }
+        }
+        
+        function runFullTest() {
+            console.log('=== 开始完整测试流程 ===');
+            document.getElementById('test-results').innerHTML = '';
+            
+            // 1. 检查模块状态
+            const moduleReady = checkModuleStatus();
+            
+            if (moduleReady) {
+                // 2. 初始化模块
+                console.log('正在初始化任务提交模块...');
+                try {
+                    window.TaskSubmission.init();
+                    addTestResult('任务提交模块初始化成功', 'success');
+                } catch (error) {
+                    addTestResult(`初始化失败: ${error.message}`, 'error');
+                    console.error('初始化失败:', error);
+                    return;
+                }
+                
+                // 3. 测试员工加载
+                setTimeout(() => testEmployeeLoading(), 500);
+                
+                // 4. 测试任务加载（延迟执行）
+                setTimeout(() => testTaskLoading(), 1000);
+                
+                addTestResult('完整测试流程执行完成', 'success');
+            }
+            
+            console.log('=== 完整测试结束 ===');
+        }
+        
+        // 页面加载完成后自动运行测试
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，开始自动检查...');
+            console.log('当前URL:', window.location.href);
+            console.log('jQuery版本:', typeof jQuery !== 'undefined' ? jQuery.fn.jquery : '未加载');
+            
+            // 延迟2秒后运行测试，确保所有脚本加载完成
+            setTimeout(() => {
+                runFullTest();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

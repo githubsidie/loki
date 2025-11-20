@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>控制台输出监控</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .console-container { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 14px; max-height: 600px; overflow-y: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .log-entry { margin: 2px 0; padding: 2px 0; word-break: break-all; }
+        .log-time { color: #858585; margin-right: 10px; }
+        .log-info { color: #4fc3f7; }
+        .log-success { color: #4caf50; }
+        .log-error { color: #f44336; }
+        .log-warning { color: #ff9800; }
+        .controls { margin: 20px 0; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; background: #007bff; color: white; }
+        button:hover { background: #0056b3; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .iframe-container { display: flex; gap: 20px; }
+        .iframe-wrapper { flex: 1; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        iframe { width: 100%; height: 400px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>任务提交模块控制台监控</h1>
+            <div id="status" class="status info">正在监控控制台输出...</div>
+            <div class="controls">
+                <button onclick="clearConsole()">清空控制台</button>
+                <button onclick="runDiagnostics()">运行诊断</button>
+                <button onclick="testTaskSubmission()">测试任务提交</button>
+                <button onclick="reloadIframe()">重新加载页面</button>
+            </div>
+        </div>
+        
+        <div class="iframe-container">
+            <div class="iframe-wrapper">
+                <h3>Index.html 页面</h3>
+                <iframe id="test-iframe" src="index.html"></iframe>
+            </div>
+            <div class="iframe-wrapper">
+                <h3>控制台输出</h3>
+                <div id="console-output" class="console-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const consoleOutput = document.getElementById('console-output');
+        const statusDiv = document.getElementById('status');
+        const iframe = document.getElementById('test-iframe');
+        let messageCount = 0;
+        
+        function addLogEntry(level, message) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            const time = new Date().toLocaleTimeString();
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'log-time';
+            timeSpan.textContent = time;
+            
+            const messageSpan = document.createElement('span');
+            messageSpan.className = `log-${level}`;
+            messageSpan.textContent = message;
+            
+            entry.appendChild(timeSpan);
+            entry.appendChild(messageSpan);
+            consoleOutput.appendChild(entry);
+            
+            messageCount++;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        function clearConsole() {
+            consoleOutput.innerHTML = '';
+            messageCount = 0;
+            addLogEntry('info', '控制台已清空');
+        }
+        
+        function runDiagnostics() {
+            addLogEntry('info', '=== 开始运行诊断 ===');
+            
+            try {
+                // 检查iframe内容
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                addLogEntry('info', '成功访问iframe文档');
+                
+                // 检查TaskSubmission对象
+                const taskSubmission = iframe.contentWindow.TaskSubmission;
+                if (typeof taskSubmission === 'undefined') {
+                    addLogEntry('error', 'TaskSubmission对象未定义');
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = 'TaskSubmission对象未定义';
+                } else {
+                    addLogEntry('success', 'TaskSubmission对象已定义');
+                    
+                    // 检查方法
+                    const methods = ['init', 'bindEvents', 'loadEmployees', 'submitTask'];
+                    methods.forEach(method => {
+                        if (typeof taskSubmission[method] === 'function') {
+                            addLogEntry('success', `${method}() 方法存在`);
+                        } else {
+                            addLogEntry('error', `${method}() 方法不存在`);
+                        }
+                    });
+                    
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '任务提交模块诊断完成';
+                }
+                
+                // 检查DOM元素
+                const elements = ['submission-employee', 'submission-task', 'task-submission-form'];
+                elements.forEach(id => {
+                    const element = iframeDoc.getElementById(id);
+                    if (element) {
+                        addLogEntry('success', `DOM元素 ${id} 存在`);
+                    } else {
+                        addLogEntry('error', `DOM元素 ${id} 不存在`);
+                    }
+                });
+                
+            } catch (error) {
+                addLogEntry('error', `诊断失败: ${error.message}`);
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `诊断失败: ${error.message}`;
+            }
+            
+            addLogEntry('info', '=== 诊断完成 ===');
+        }
+        
+        function testTaskSubmission() {
+            addLogEntry('info', '=== 开始测试任务提交模块 ===');
+            
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const iframeWindow = iframe.contentWindow;
+                
+                // 尝试初始化
+                if (typeof iframeWindow.TaskSubmission !== 'undefined') {
+                    addLogEntry('info', '正在初始化TaskSubmission...');
+                    iframeWindow.TaskSubmission.init();
+                    addLogEntry('success', 'TaskSubmission初始化完成');
+                    
+                    // 尝试加载员工
+                    setTimeout(() => {
+                        addLogEntry('info', '正在加载员工数据...');
+                        iframeWindow.TaskSubmission.loadEmployees();
+                        addLogEntry('success', '员工数据加载完成');
+                    }, 1000);
+                    
+                } else {
+                    addLogEntry('error', 'TaskSubmission对象不存在，无法测试');
+                }
+                
+            } catch (error) {
+                addLogEntry('error', `测试失败: ${error.message}`);
+            }
+            
+            addLogEntry('info', '=== 测试完成 ===');
+        }
+        
+        function reloadIframe() {
+            addLogEntry('info', '正在重新加载iframe...');
+            iframe.src = iframe.src;
+        }
+        
+        // 监听iframe加载事件
+        iframe.addEventListener('load', function() {
+            addLogEntry('info', 'iframe加载完成');
+            
+            try {
+                const iframeWindow = iframe.contentWindow;
+                
+                // 重定向iframe的控制台输出
+                if (iframeWindow.console) {
+                    const originalLog = iframeWindow.console.log;
+                    const originalError = iframeWindow.console.error;
+                    
+                    iframeWindow.console.log = function(...args) {
+                        originalLog.apply(iframeWindow.console, args);
+                        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+                        addLogEntry('info', `[iframe] ${message}`);
+                    };
+                    
+                    iframeWindow.console.error = function(...args) {
+                        originalError.apply(iframeWindow.console, args);
+                        const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+                        addLogEntry('error', `[iframe] ${message}`);
+                    };
+                }
+                
+                // 监听iframe的错误
+                iframeWindow.addEventListener('error', function(event) {
+                    addLogEntry('error', `[iframe错误] ${event.message} (文件: ${event.filename}, 行: ${event.lineno})`);
+                });
+                
+                // 监听未处理的Promise拒绝
+                iframeWindow.addEventListener('unhandledrejection', function(event) {
+                    addLogEntry('error', `[iframe未处理拒绝] ${event.reason}`);
+                });
+                
+                addLogEntry('success', '成功设置iframe控制台重定向');
+                
+            } catch (error) {
+                addLogEntry('error', `设置iframe控制台重定向失败: ${error.message}`);
+            }
+        });
+        
+        // 页面加载完成后自动运行诊断
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                runDiagnostics();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

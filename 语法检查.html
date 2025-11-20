@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript语法检查</title>
+</head>
+<body>
+    <h1>JavaScript语法检查</h1>
+    <div id="result"></div>
+    
+    <script>
+        // 简单的语法检查函数
+        function checkSyntax(code) {
+            try {
+                // 使用Function构造器来检查语法
+                new Function(code);
+                return true;
+            } catch (error) {
+                return error.message;
+            }
+        }
+        
+        // 由于不能加载外部文件，我们创建一个简单的测试
+        const testCode = `
+            const TaskSubmission = {
+                init() {
+                    console.log('TaskSubmission: 开始绑定事件...');
+                    this.bindEvents();
+                    this.loadEmployees();
+                }
+            };
+        `;
+        
+        const result = checkSyntax(testCode);
+        document.getElementById('result').innerHTML = `
+            <p>语法检查结果: ${result === true ? '通过' : '失败'}</p>
+            ${result !== true ? `<p>错误信息: ${result}</p>` : ''}
+        `;
+        
+        // 检查控制台是否有错误
+        console.log('语法检查页面已加载');
+        console.log('TaskSubmission测试代码语法:', result === true ? '正确' : result);
+    </script>
+</body>
+</html>

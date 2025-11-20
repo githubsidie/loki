@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务管理系统</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>任务管理系统</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-item active" data-target="employees">
+                    <span class="icon">👥</span>
+                    <span>员工详情</span>
+                </div>
+                <div class="sidebar-item" data-target="tasks">
+                    <span class="icon">📋</span>
+                    <span>任务列表</span>
+                </div>
+                <div class="sidebar-item" data-target="assign">
+                    <span class="icon">📝</span>
+                    <span>分配任务</span>
+                </div>
+                <div class="sidebar-item" data-target="task-submission">
+                    <span class="icon">✅</span>
+                    <span>任务提交</span>
+                </div>
+                <div class="sidebar-item" data-target="accounts">
+                    <span class="icon">👤</span>
+                    <span>账号管理</span>
+                </div>
+                <div class="sidebar-item" data-target="statistics">
+                    <span class="icon">📊</span>
+                    <span>任务统计</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 员工总览模块 -->
+            <div id="employees" class="page-module active">
+                <div class="module-header">
+                    <h1>员工详情</h1>
+                </div>
+                <div id="employees-container" class="employees-grid">
+                    <!-- 员工卡片将在这里动态生成 -->
+                </div>
+            </div>
+
+            <!-- 任务列表模块 -->
+            <div id="tasks" class="page-module">
+                <div class="module-header">
+                    <h1>任务列表</h1>
+                    <div class="filter-controls">
+                        <select id="employee-filter" class="form-select">
+                            <option value="">所有员工</option>
+                        </select>
+                        <select id="status-filter" class="form-select">
+                            <option value="">所有状态</option>
+                            <option value="pending">待接收</option>
+                            <option value="doing">进行中</option>
+                            <option value="done">已完成</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>任务名称</th>
+                                <th>负责人</th>
+                                <th>开始时间</th>
+                                <th>结束时间</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-table-body">
+                            <!-- 任务列表将在这里动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 分配任务模块 -->
+            <div id="assign" class="page-module">
+                <div class="module-header">
+                    <h1>分配任务</h1>
+                </div>
+                <div class="form-container">
+                    <form id="task-form" class="task-form">
+                        <div class="form-group">
+                            <label for="task-name">任务名称</label>
+                            <input type="text" id="task-name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-content">任务内容</label>
+                            <textarea id="task-content" class="form-textarea" rows="4" placeholder="请详细描述任务内容、要求和注意事项..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-points">任务积分</label>
+                            <select id="task-points" class="form-select" required>
+                                <option value="">请选择积分</option>
+                                <option value="1">1分</option>
+                                <option value="2">2分</option>
+                                <option value="3">3分</option>
+                                <option value="4">4分</option>
+                                <option value="5">5分</option>
+                                <option value="6">6分</option>
+                                <option value="7">7分</option>
+                                <option value="8">8分</option>
+                                <option value="9">9分</option>
+                                <option value="10">10分</option>
+                                <option value="20">20分</option>
+                                <option value="50">50分</option>
+                                <option value="100">100分</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-assignee">负责人</label>
+                            <select id="task-assignee" class="form-select" required>
+                                <option value="">请选择员工</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-start-time">开始时间</label>
+                                <input type="datetime-local" id="task-start-time" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="task-end-time">结束时间</label>
+                                <input type="datetime-local" id="task-end-time" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-status">状态</label>
+                                <select id="task-status" class="form-select" required>
+                                    <option value="pending">待接收</option>
+                                    <option value="doing">进行中</option>
+                                    <option value="done">已完成</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="task-priority">优先级</label>
+                                <select id="task-priority" class="form-select" required>
+                                    <option value="低">低</option>
+                                    <option value="中">中</option>
+                                    <option value="高">高</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">分配任务</button>
+                            <button type="reset" class="btn btn-secondary">重置</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 账号管理模块 -->
+            <div id="accounts" class="page-module">
+                <div class="module-header">
+                    <h1>账号管理</h1>
+                </div>
+                <div class="account-management">
+                    <div class="account-form-container">
+                        <form id="account-form" class="account-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="account-id">员工ID</label>
+                                    <input type="text" id="account-id" class="form-input" placeholder="例如: 1004" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="account-name">员工姓名</label>
+                                    <input type="text" id="account-name" class="form-input" placeholder="例如: 赵六" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="account-phone">员工电话</label>
+                                    <input type="tel" id="account-phone" class="form-input" placeholder="例如: 13812345678" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="account-role">角色</label>
+                                    <select id="account-role" class="form-select" required>
+                                        <option value="员工">员工</option>
+                                        <option value="经理">经理</option>
+                                        <option value="主管">主管</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="account-department">部门分组</label>
+                                <select id="account-department" class="form-select" required>
+                                    <option value="应急部">应急部</option>
+                                    <option value="有害部">有害部</option>
+                                    <option value="网媒部">网媒部</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">添加员工</button>
+                                <button type="reset" class="btn btn-secondary">重置</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="employee-list">
+                        <div class="table-container">
+                            <table class="employee-table">
+                                <thead>
+                                    <tr>
+                                        <th>员工ID</th>
+                                        <th>姓名</th>
+                                        <th>电话</th>
+                                        <th>角色</th>
+                                        <th>部门</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employee-table-body">
+                                    <!-- 员工列表将在这里动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 员工总览模块 -->
+            <div id="employees" class="page-module active">
+                <div class="module-header">
+                    <h1>员工详情</h1>
+                </div>
+                <div id="employees-container" class="employees-grid">
+                    <!-- 员工卡片将在这里动态生成 -->
+                </div>
+            </div>
+
+            <!-- 任务列表模块 -->
+            <div id="tasks" class="page-module">
+                <div class="module-header">
+                    <h1>任务列表</h1>
+                    <div class="filter-controls">
+                        <select id="employee-filter" class="form-select">
+                            <option value="">所有员工</option>
+                        </select>
+                        <select id="status-filter" class="form-select">
+                            <option value="">所有状态</option>
+                            <option value="pending">待接收</option>
+                            <option value="doing">进行中</option>
+                            <option value="done">已完成</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>任务名称</th>
+                                <th>负责人</th>
+                                <th>开始时间</th>
+                                <th>结束时间</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-table-body">
+                            <!-- 任务列表将在这里动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 账号管理模块 -->
+            <div id="accounts" class="page-module">
+                <div class="module-header">
+                    <h1>账号管理</h1>
+                </div>
+                <div class="account-management">
+                    <div class="account-form-container">
+                        <form id="account-form" class="account-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="account-id">员工ID</label>
+                                    <input type="text" id="account-id" class="form-input" placeholder="例如: 1004" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="account-name">员工姓名</label>
+                                    <input type="text" id="account-name" class="form-input" placeholder="例如: 赵六" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="account-phone">员工电话</label>
+                                    <input type="tel" id="account-phone" class="form-input" placeholder="例如: 13812345678" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="account-role">角色</label>
+                                    <select id="account-role" class="form-select" required>
+                                        <option value="员工">员工</option>
+                                        <option value="经理">经理</option>
+                                        <option value="主管">主管</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="account-department">部门分组</label>
+                                <select id="account-department" class="form-select" required>
+                                    <option value="应急部">应急部</option>
+                                    <option value="有害部">有害部</option>
+                                    <option value="网媒部">网媒部</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">添加员工</button>
+                                <button type="reset" class="btn btn-secondary">重置</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="employee-list">
+                        <h3>员工列表</h3>
+                        <div class="table-container">
+                            <table class="employee-table">
+                                <thead>
+                                    <tr>
+                                        <th>员工ID</th>
+                                        <th>姓名</th>
+                                        <th>电话</th>
+                                        <th>角色</th>
+                                        <th>部门</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employee-table-body">
+                                    <!-- 员工列表将在这里动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分配任务模块 -->
+            <div id="assign" class="page-module">
+                <div class="module-header">
+                    <h1>分配任务</h1>
+                </div>
+                <div class="form-container">
+                    <form id="task-form" class="task-form">
+                        <div class="form-group">
+                            <label for="task-name">任务名称</label>
+                            <input type="text" id="task-name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-assignee">负责人</label>
+                            <select id="task-assignee" class="form-select" required>
+                                <option value="">请选择员工</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-start-time">开始时间</label>
+                                <input type="datetime-local" id="task-start-time" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="task-end-time">结束时间</label>
+                                <input type="datetime-local" id="task-end-time" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task-status">状态</label>
+                                <select id="task-status" class="form-select" required>
+                                    <option value="pending">待接收</option>
+                                    <option value="doing">进行中</option>
+                                    <option value="done">已完成</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="task-priority">优先级</label>
+                                <select id="task-priority" class="form-select" required>
+                                    <option value="低">低</option>
+                                    <option value="中">中</option>
+                                    <option value="高">高</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">分配任务</button>
+                            <button type="reset" class="btn btn-secondary">重置</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 任务提交模块 -->
+            <div id="task-submission" class="page-module">
+                <div class="module-header">
+                    <h1>任务提交</h1>
+                </div>
+                <div class="form-container">
+                    <form id="task-submission-form" class="task-form">
+                        <div class="form-group">
+                            <label for="submission-employee">选择员工</label>
+                            <select id="submission-employee" class="form-select" required>
+                                <option value="">请选择员工</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="submission-task">选择任务</label>
+                            <select id="submission-task" class="form-select" required>
+                                <option value="">请先选择员工</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="submission-attachment">上传附件</label>
+                            <input type="file" id="submission-attachment" class="form-input" accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.mp3,.wav,.wma" multiple>
+                            <div class="file-info">支持格式：Word、Excel、PPT、图片、音乐</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="submission-note">完成说明</label>
+                            <textarea id="submission-note" class="form-textarea" rows="4" placeholder="请输入任务完成情况说明..." required></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">提交任务</button>
+                            <button type="reset" class="btn btn-secondary">重置</button>
+                        </div>
+                    </form>
+                    <div id="submission-uploaded-files" class="uploaded-files-list"></div>
+                </div>
+            </div>
+
+            <!-- 任务统计模块 -->
+            <div id="statistics" class="page-module">
+                <div class="module-header">
+                    <h1>任务统计</h1>
+                </div>
+                
+                <!-- 统计筛选区域 -->
+                <div class="statistics-filters">
+                    <div class="filter-group">
+                        <label for="stats-employee-filter">员工筛选</label>
+                        <select id="stats-employee-filter" class="form-select">
+                            <option value="">所有员工</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="stats-time-range">时间范围</label>
+                        <select id="stats-time-range" class="form-select">
+                            <option value="daily">每日</option>
+                            <option value="weekly">每周</option>
+                            <option value="monthly">每月</option>
+                            <option value="quarterly">每季</option>
+                            <option value="yearly">每年</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="stats-department-filter">部门筛选</label>
+                        <select id="stats-department-filter" class="form-select">
+                            <option value="">所有部门</option>
+                            <option value="应急部">应急部</option>
+                            <option value="有害部">有害部</option>
+                            <option value="网媒部">网媒部</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="stats-points-range">积分范围</label>
+                        <select id="stats-points-range" class="form-select">
+                            <option value="">所有积分</option>
+                            <option value="1-5">1-5分</option>
+                            <option value="6-10">6-10分</option>
+                            <option value="11-20">11-20分</option>
+                            <option value="21-50">21-50分</option>
+                            <option value="51-100">51-100分</option>
+                            <option value="100+">100分以上</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 统计概览卡片 -->
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-tasks">0</div>
+                            <div class="stat-label">总任务数</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="completed-tasks">0</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="in-progress-tasks">0</div>
+                            <div class="stat-label">进行中</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="completion-rate">0%</div>
+                            <div class="stat-label">完成率</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-points">0</div>
+                            <div class="stat-label">总积分</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="avg-points">0</div>
+                            <div class="stat-label">平均积分</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图表区域 -->
+                <div class="charts-container">
+                    <!-- 饼状图区域 -->
+                    <div class="chart-section">
+                        <h3>任务状态分布</h3>
+                        <div class="chart-container">
+                            <canvas id="task-status-chart" width="300" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 柱状图区域 -->
+                    <div class="chart-section">
+                        <h3>部门任务对比</h3>
+                        <div class="chart-container">
+                            <canvas id="department-chart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 曲线图区域 -->
+                    <div class="chart-section">
+                        <h3>任务趋势分析</h3>
+                        <div class="chart-container">
+                            <canvas id="task-trend-chart" width="600" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 详细任务列表 -->
+                <div class="detailed-stats">
+                    <h3>详细任务统计</h3>
+                    <div class="table-container">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>员工姓名</th>
+                                    <th>部门</th>
+                                    <th>总任务数</th>
+                                    <th>已完成</th>
+                                    <th>进行中</th>
+                                    <th>待接收</th>
+                                    <th>完成率</th>
+                                    <th>总积分</th>
+                                    <th>平均耗时(天)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailed-stats-body">
+                                <!-- 详细统计数据将在这里动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 积分统计模块 -->
+            <div id="points-statistics" class="page-module">
+                <div class="module-header">
+                    <h1>积分统计</h1>
+                </div>
+                
+                <!-- 积分统计筛选区域 -->
+                <div class="statistics-filters">
+                    <div class="filter-group">
+                        <label for="points-employee-filter">员工筛选</label>
+                        <select id="points-employee-filter" class="form-select">
+                            <option value="">所有员工</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="points-time-range">时间周期</label>
+                        <select id="points-time-range" class="form-select">
+                            <option value="daily">每日</option>
+                            <option value="weekly">每周</option>
+                            <option value="monthly" selected>每月</option>
+                            <option value="quarterly">每季</option>
+                            <option value="yearly">每年</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="points-department-filter">部门筛选</label>
+                        <select id="points-department-filter" class="form-select">
+                            <option value="">所有部门</option>
+                            <option value="应急部">应急部</option>
+                            <option value="有害部">有害部</option>
+                            <option value="网媒部">网媒部</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 积分统计概览卡片 -->
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon">💎</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-period-points">0</div>
+                            <div class="stat-label">周期总积分</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👑</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="top-employee-points">0</div>
+                            <div class="stat-label">最高积分员工</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="avg-period-points">0</div>
+                            <div class="stat-label">周期平均积分</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="active-employees-count">0</div>
+                            <div class="stat-label">活跃员工数</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 积分图表区域 -->
+                <div class="charts-container">
+                    <!-- 积分趋势图 -->
+                    <div class="chart-section">
+                        <h3>积分趋势分析</h3>
+                        <div class="chart-container">
+                            <canvas id="points-trend-chart" width="600" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 员工积分对比图 -->
+                    <div class="chart-section">
+                        <h3>员工积分对比</h3>
+                        <div class="chart-container">
+                            <canvas id="employee-points-chart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 详细积分统计表格 -->
+                <div class="detailed-stats">
+                    <h3>详细积分统计</h3>
+                    <div class="table-container">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>员工姓名</th>
+                                    <th>部门</th>
+                                    <th>周期积分</th>
+                                    <th>完成任务数</th>
+                                    <th>平均积分/任务</th>
+                                    <th>积分排名</th>
+                                    <th>环比变化</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailed-points-body">
+                                <!-- 详细积分数据将在这里动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 客户交付模块 -->
+            <div id="customer-delivery" class="page-module">
+                <div class="module-header">
+                    <h1>客户交付</h1>
+                </div>
+                
+                <!-- 客户交付筛选区域 -->
+                <div class="statistics-filters">
+                    <div class="filter-group">
+                        <label for="customer-type-filter">客户类型</label>
+                        <select id="customer-type-filter" class="form-select">
+                            <option value="">所有类型</option>
+                            <option value="政务">政务</option>
+                            <option value="教育">教育</option>
+                            <option value="医疗">医疗</option>
+                            <option value="企业">企业</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="customer-province-filter">省份筛选</label>
+                        <select id="customer-province-filter" class="form-select">
+                            <option value="">所有省份</option>
+                            <option value="北京">北京</option>
+                            <option value="上海">上海</option>
+                            <option value="广东">广东</option>
+                            <option value="浙江">浙江</option>
+                            <option value="江苏">江苏</option>
+                            <option value="山东">山东</option>
+                            <option value="河南">河南</option>
+                            <option value="四川">四川</option>
+                            <option value="湖北">湖北</option>
+                            <option value="湖南">湖南</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="contract-status-filter">合同状态</label>
+                        <select id="contract-status-filter" class="form-select">
+                            <option value="">所有状态</option>
+                            <option value="active">进行中</option>
+                            <option value="completed">已完成</option>
+                            <option value="expired">已过期</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button id="add-customer-btn" class="btn btn-primary">新建客户</button>
+                    </div>
+                </div>
+
+                <!-- 客户概览卡片 -->
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon">🏢</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-customers">0</div>
+                            <div class="stat-label">总客户数</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="active-contracts">0</div>
+                            <div class="stat-label">进行中合同</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="completed-contracts">0</div>
+                            <div class="stat-label">已完成合同</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📎</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-attachments">0</div>
+                            <div class="stat-label">总附件数</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 客户列表表格 -->
+                <div class="detailed-stats">
+                    <h3>客户列表</h3>
+                    <div class="table-container">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>客户名称</th>
+                                    <th>客户类型</th>
+                                    <th>所属省份</th>
+                                    <th>合同开始时间</th>
+                                    <th>合同结束时间</th>
+                                    <th>合同状态</th>
+                                    <th>附件数量</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-delivery-body">
+                                <!-- 客户数据将在这里动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 积分统计导航项 -->
+                <script>
+                    // 在导航菜单中添加积分统计选项
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const sidebarNav = document.querySelector('.sidebar-nav');
+                        if (sidebarNav) {
+                            const pointsNavItem = document.createElement('div');
+                            pointsNavItem.className = 'sidebar-item';
+                            pointsNavItem.setAttribute('data-target', 'points-statistics');
+                            pointsNavItem.innerHTML = '<span class="icon">💎</span><span>积分统计</span>';
+                            
+                            // 在积分统计下方添加客户交付导航项
+                            const customerDeliveryNavItem = document.createElement('div');
+                            customerDeliveryNavItem.className = 'sidebar-item';
+                            customerDeliveryNavItem.setAttribute('data-target', 'customer-delivery');
+                            customerDeliveryNavItem.innerHTML = '<span class="icon">🏢</span><span>客户交付</span>';
+                            
+                            sidebarNav.appendChild(pointsNavItem);
+                            sidebarNav.appendChild(customerDeliveryNavItem);
+                        }
+                    });
+                </script>
+
+    <!-- 任务编辑模态框 -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑任务</h3>
+                <button id="close-task-modal" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 编辑表单将在这里动态生成 -->
+            </div>
+            <div class="modal-footer">
+                <button id="close-task-btn" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 员工任务详情模态框 -->
+    <div id="employee-tasks-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="employee-tasks-title">员工任务详情</h3>
+                <button id="close-employee-tasks-modal" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="employee-tasks-content">
+                    <!-- 员工任务详情将在这里动态生成 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-employee-tasks-btn" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建客户模态框 -->
+    <div id="customer-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="customer-modal-title">新建客户</h3>
+                <button id="close-customer-modal" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="customer-form">
+                    <div class="form-group">
+                        <label for="customer-name">客户名称</label>
+                        <input type="text" id="customer-name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-type">客户类型</label>
+                        <select id="customer-type" class="form-select" required>
+                            <option value="">请选择客户类型</option>
+                            <option value="政务">政务</option>
+                            <option value="教育">教育</option>
+                            <option value="医疗">医疗</option>
+                            <option value="企业">企业</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-province">所属省份</label>
+                        <select id="customer-province" class="form-select" required>
+                            <option value="">请选择省份</option>
+                            <option value="北京">北京</option>
+                            <option value="上海">上海</option>
+                            <option value="广东">广东</option>
+                            <option value="浙江">浙江</option>
+                            <option value="江苏">江苏</option>
+                            <option value="山东">山东</option>
+                            <option value="河南">河南</option>
+                            <option value="四川">四川</option>
+                            <option value="湖北">湖北</option>
+                            <option value="湖南">湖南</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contract-start-date">合同开始时间</label>
+                            <input type="date" id="contract-start-date" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contract-end-date">合同结束时间</label>
+                            <input type="date" id="contract-end-date" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-contact">联系人</label>
+                        <input type="text" id="customer-contact" class="form-input" placeholder="请输入联系人姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-phone">联系电话</label>
+                        <input type="tel" id="customer-phone" class="form-input" placeholder="请输入联系电话">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-address">地址</label>
+                        <textarea id="customer-address" class="form-textarea" rows="2" placeholder="请输入详细地址"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-remarks">备注</label>
+                        <textarea id="customer-remarks" class="form-textarea" rows="3" placeholder="请输入备注信息"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">保存客户</button>
+                        <button type="button" id="cancel-customer-btn" class="btn btn-secondary">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 附件管理模态框 -->
+    <div id="attachment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="attachment-modal-title">附件管理</h3>
+                <button id="close-attachment-modal" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="attachment-upload-area">
+                    <div class="form-group">
+                        <label for="attachment-file">选择文件</label>
+                        <input type="file" id="attachment-file" class="form-input" multiple>
+                    </div>
+                    <div class="form-group">
+                        <label for="attachment-remark">备注</label>
+                        <textarea id="attachment-remark" class="form-textarea" rows="2" placeholder="请输入附件备注"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="attachment-upload-time-start">上传时间（起始）</label>
+                            <input type="datetime-local" id="attachment-upload-time-start" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="attachment-upload-time-end">上传时间（结束）</label>
+                            <input type="datetime-local" id="attachment-upload-time-end" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="upload-attachment-btn" class="btn btn-primary">上传附件</button>
+                    </div>
+                </div>
+                
+                <div class="attachment-list">
+                    <h4>已上传附件</h4>
+                    <div id="attachment-list-content">
+                        <!-- 附件列表将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-attachment-btn" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div id="notification" class="notification"></div>
+    <div id="toast-notification" class="toast"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="未命名.js"></script>
+</body>
+</html>
