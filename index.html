@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>任务管理系统</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="module">
+        // 导入认证管理器
+        import authManager from './auth.js';
+        
+        // 页面加载前检查登录状态
+        if (!authManager.isLoggedIn()) {
+            // 用户未登录，重定向到登录页面
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -12,6 +22,13 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h2>任务管理系统</h2>
+                <div id="user-info" class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <div id="user-name" class="user-name">加载中...</div>
+                        <div id="user-role" class="user-role">-</div>
+                    </div>
+                </div>
             </div>
             <nav class="sidebar-nav">
                 <div class="sidebar-item active" data-target="employees">
@@ -29,6 +46,10 @@
                 <div class="sidebar-item" data-target="task-submission">
                     <span class="icon">✅</span>
                     <span>任务提交</span>
+                </div>
+                <div class="sidebar-item" id="logout-item">
+                    <span class="icon">🚪</span>
+                    <span>退出登录</span>
                 </div>
                 <div class="sidebar-item" data-target="accounts">
                     <span class="icon">👤</span>
@@ -804,6 +825,88 @@
             </div>
         </main>
     </div>
+    
+    <script type="module">
+        // 导入认证管理器
+        import authManager from './auth.js';
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查登录状态
+            const user = authManager.getCurrentUser();
+            
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // 更新用户信息显示
+            document.getElementById('user-name').textContent = user.displayName;
+            document.getElementById('user-role').textContent = user.role === 'admin' ? '管理员' : '普通用户';
+            
+            // 添加退出登录事件监听
+            document.getElementById('logout-item').addEventListener('click', function() {
+                if (confirm('确定要退出登录吗？')) {
+                    authManager.logout();
+                }
+            });
+            
+            // 添加会话超时检查（每分钟检查一次）
+            setInterval(() => {
+                if (!authManager.isLoggedIn()) {
+                    alert('您的会话已过期，请重新登录');
+                    window.location.href = 'login.html';
+                }
+            }, 60000); // 60秒检查一次
+        });
+    </script>
+    
+    <style>
+        /* 用户信息显示样式 */
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .user-avatar {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+        
+        .user-details {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .user-role {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        /* 退出登录样式 */
+        #logout-item {
+            margin-top: 20px;
+            background-color: rgba(255, 0, 0, 0.1);
+            color: #ff6b6b;
+        }
+        
+        #logout-item:hover {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #ff5252;
+        }
+    </style>
 
     <!-- 积分统计导航项 -->
                 <script>
@@ -811,19 +914,45 @@
                     document.addEventListener('DOMContentLoaded', function() {
                         const sidebarNav = document.querySelector('.sidebar-nav');
                         if (sidebarNav) {
+                            // 创建并添加积分统计菜单项
                             const pointsNavItem = document.createElement('div');
                             pointsNavItem.className = 'sidebar-item';
                             pointsNavItem.setAttribute('data-target', 'points-statistics');
                             pointsNavItem.innerHTML = '<span class="icon">💎</span><span>积分统计</span>';
                             
-                            // 在积分统计下方添加客户交付导航项
+                            // 创建并添加客户交付菜单项
                             const customerDeliveryNavItem = document.createElement('div');
                             customerDeliveryNavItem.className = 'sidebar-item';
                             customerDeliveryNavItem.setAttribute('data-target', 'customer-delivery');
                             customerDeliveryNavItem.innerHTML = '<span class="icon">🏢</span><span>客户交付</span>';
                             
+                            // 创建并添加退出登录菜单项（放置在客户交付下方）
+                            const logoutItem = document.createElement('div');
+                            logoutItem.className = 'sidebar-item';
+                            logoutItem.id = 'logout-item';
+                            logoutItem.innerHTML = '<span class="icon">🚪</span><span>退出登录</span>';
+                            
+                            // 移除现有的退出登录项（如果存在）
+                            const existingLogoutItem = document.getElementById('logout-item');
+                            if (existingLogoutItem) {
+                                existingLogoutItem.remove();
+                            }
+                            
+                            // 按顺序添加菜单项
                             sidebarNav.appendChild(pointsNavItem);
                             sidebarNav.appendChild(customerDeliveryNavItem);
+                            sidebarNav.appendChild(logoutItem);
+                            
+                            // 为新添加的退出登录项添加点击事件
+                            logoutItem.addEventListener('click', function() {
+                                if (confirm('确定要退出登录吗？')) {
+                                    // 清除本地存储中的用户信息
+                                    localStorage.removeItem('user');
+                                    localStorage.removeItem('token');
+                                    // 重定向到登录页面
+                                    window.location.href = 'login.html';
+                                }
+                            });
                         }
                     });
                 </script>
