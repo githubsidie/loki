@@ -112,15 +112,19 @@ async function fetchURL(url) {
             return await fetchDouyinURL(url, controller, timeoutId);
         }
         
+        // 针对社交媒体平台，使用手机端User-Agent以获取更准确的内容
+        const mobileUserAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1';
+        
         // 首先尝试使用cors模式，获取完整响应
         const response = await fetch(url, {
             method: 'GET',
             signal: controller.signal,
             mode: 'cors',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'User-Agent': mobileUserAgent,
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Referer': 'https://www.google.com/'
+                'Referer': 'https://www.google.com/',
+                'X-Requested-With': 'XMLHttpRequest' // 模拟AJAX请求
             },
             cache: 'no-cache'
         });
@@ -175,14 +179,19 @@ async function fetchURL(url) {
 async function fetchDouyinURL(url, controller, timeoutId) {
     try {
         // 抖音视频URL格式可能为：https://v.douyin.com/xxxx/ 或 https://www.douyin.com/video/xxxx
-        // 尝试使用HEAD请求获取基本信息
+        // 针对抖音，使用手机端User-Agent以获取更准确的内容
+        const mobileUserAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1';
+        
+        // 尝试使用GET请求而非HEAD请求，获取完整响应
         const response = await fetch(url, {
-            method: 'HEAD',
+            method: 'GET',
             signal: controller.signal,
             mode: 'no-cors',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': '*/*'
+                'User-Agent': mobileUserAgent,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Referer': 'https://www.google.com/',
+                'X-Requested-With': 'XMLHttpRequest' // 模拟AJAX请求
             },
             cache: 'no-cache'
         });
@@ -246,14 +255,18 @@ async function fetchURLWithNoCors(url) {
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 增加超时时间到15秒
     
     try {
+        // 使用手机端User-Agent以获取更准确的内容
+        const mobileUserAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1';
+        
         const response = await fetch(url, {
             method: 'GET',
             signal: controller.signal,
             mode: 'no-cors',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': '*/*',
-                'Referer': 'https://www.google.com/'
+                'User-Agent': mobileUserAgent,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Referer': 'https://www.google.com/',
+                'X-Requested-With': 'XMLHttpRequest' // 模拟AJAX请求
             },
             cache: 'no-cache'
         });
