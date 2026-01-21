@@ -1,8 +1,8 @@
-// 模拟用户数据库（在实际应用中应连接后端API）
-const users = [
-    { username: 'admin', password: 'admin123', role: 'admin' },
-    { username: 'user1', password: 'password123', role: 'user' }
-];
+// 使用数据管理器进行数据操作
+// 确保dataManager已经加载
+if (typeof dataManager === 'undefined') {
+    console.error('数据管理器未加载，请确保在login.js之前加载dataManager.js');
+}
 
 // 显示错误消息
 function showError(message) {
@@ -31,48 +31,56 @@ function handleLogin(event) {
         return;
     }
     
-    // 验证用户（在实际应用中应发送到后端验证）
-    const user = users.find(u => u.username === username && u.password === password);
-    
-    if (user) {
-        // 登录成功，保存用户信息到本地存储
-        const userData = {
-            username: user.username,
-            role: user.role,
-            loggedIn: true,
-            loginTime: new Date().getTime()
-        };
+    try {
+        // 使用dataManager验证用户并获取用户信息
+        const user = dataManager.findUserByUsername(username);
         
-        // 如果选中了记住我，使用localStorage，否则使用sessionStorage
-        if (rememberMe) {
-            localStorage.setItem('userData', JSON.stringify(userData));
+        if (user && user.password === password) {
+            // 登录成功，更新最后登录时间
+            const users = dataManager.getUsers();
+            const userIndex = users.findIndex(u => u.username === username);
+            if (userIndex !== -1) {
+                users[userIndex].lastLogin = new Date().toISOString();
+                dataManager.saveUsers(users);
+            }
+            
+            // 构建用户数据
+            const userData = {
+                username: user.username,
+                displayName: user.displayName || user.username,
+                role: user.role || 'user',
+                loggedIn: true,
+                loginTime: new Date().toISOString()
+            };
+            
+            // 保存当前用户信息
+            dataManager.saveCurrentUser(userData, rememberMe);
+        
+            // 登录成功，重定向到主页
+            window.location.href = 'simple-index.html';
         } else {
-            sessionStorage.setItem('userData', JSON.stringify(userData));
-        }
-        
-        // 重定向到主页
-        window.location.href = 'index.html';
-    } else {
         // 登录失败
         showError('用户名或密码错误');
+        }
+    } catch (error) {
+        console.error('登录处理失败:', error);
+        showError('登录过程中发生错误，请稍后再试');
+        return;
     }
-}
 
 // 检查用户是否已登录
 function checkLoggedIn() {
-    const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
-    
-    if (userData) {
-        try {
-            const parsedData = JSON.parse(userData);
-            if (parsedData.loggedIn) {
-                // 用户已登录，重定向到主页
-                window.location.href = 'index.html';
-                return true;
-            }
-        } catch (error) {
-            console.error('解析用户数据失败:', error);
+    try {
+        // 使用dataManager检查当前用户
+        const currentUser = dataManager.getCurrentUser();
+        
+        if (currentUser && currentUser.loggedIn) {
+            // 用户已登录，重定向到主页
+            window.location.href = 'index.html';
+            return true;
         }
+    } catch (error) {
+        console.error('检查登录状态失败:', error);
     }
     
     return false;
@@ -96,14 +104,19 @@ function initLoginPage() {
     const registerLink = document.getElementById('registerLink');
     registerLink.addEventListener('click', function(event) {
         event.preventDefault();
-        showError('注册功能正在开发中，请使用测试账号登录');
+        // 跳转到注册页面
+        window.location.href = 'register.html';
     });
     
     // 如果有保存的用户名，自动填充
-    const savedUsername = localStorage.getItem('rememberedUsername');
-    if (savedUsername) {
-        document.getElementById('username').value = savedUsername;
-        document.getElementById('rememberMe').checked = true;
+    try {
+        const savedUsername = dataManager.getRememberedUsername();
+        if (savedUsername) {
+            document.getElementById('username').value = savedUsername;
+            document.getElementById('rememberMe').checked = true;
+        }
+    } catch (error) {
+        console.error('获取记住的用户名失败:', error);
     }
     
     // 添加表单验证

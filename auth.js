@@ -6,16 +6,44 @@
  */
 class AuthManager {
     constructor() {
-        // 模拟用户数据库（实际应用中应从后端获取）
-        this.users = [
-            { username: 'admin', password: 'admin123', role: 'admin', displayName: '管理员' },
-            { username: 'user1', password: 'password123', role: 'user', displayName: '测试用户' }
-        ];
+        // 模拟用户数据库（从localStorage读取，如果不存在则使用默认数据）
+        this.users = this.getUsersFromStorage();
         
         this.storageKeys = {
             USER_DATA: 'userData',
-            REMEMBERED_USERNAME: 'rememberedUsername'
+            REMEMBERED_USERNAME: 'rememberedUsername',
+            USERS_DB: 'users'
         };
+    }
+    
+    /**
+     * 从localStorage获取用户数据
+     */
+    getUsersFromStorage() {
+        const storedUsers = localStorage.getItem('users');
+        if (storedUsers) {
+            try {
+                return JSON.parse(storedUsers);
+            } catch (error) {
+                console.error('解析用户数据失败:', error);
+                // 返回默认用户数据
+                return this.getDefaultUsers();
+            }
+        }
+        // 首次使用，返回默认用户数据并保存到localStorage
+        const defaultUsers = this.getDefaultUsers();
+        localStorage.setItem('users', JSON.stringify(defaultUsers));
+        return defaultUsers;
+    }
+    
+    /**
+     * 获取默认用户数据
+     */
+    getDefaultUsers() {
+        return [
+            { username: 'admin', password: 'admin123', role: 'admin', displayName: '管理员' },
+            { username: 'user1', password: 'password123', role: 'user', displayName: '测试用户' }
+        ];
     }
     
     /**
@@ -35,7 +63,8 @@ class AuthManager {
                         throw new Error('请输入用户名和密码');
                     }
                     
-                    // 查找用户
+                    // 查找用户（从本地存储更新用户列表后查找）
+                    this.users = this.getUsersFromStorage();
                     const user = this.users.find(u => u.username === username && u.password === password);
                     
                     if (!user) {
