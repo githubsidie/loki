@@ -372,12 +372,40 @@ function detectPlatform(url) {
 function isPostDeleted(html, platform) {
     const lowerHtml = html.toLowerCase();
     
+    // 快手链接特殊处理：直接检查是否包含快手特有的有效特征
+    if (platform === 'kuaishou') {
+        // 快手有效特征
+        const kuaishouValidPatterns = [
+            'short-video', '短视频', 'video', '播放',
+            '暂未支持显示图片作品', '请在移动端查看', '请使用手机端访问',
+            'kuaishou', '快手', 'user', 'profile',
+            'view', 'watch', 'see', 'look'
+        ];
+        
+        // 快手失效特征
+        const kuaishouInvalidPatterns = [
+            '该作品已删除', '作品不存在', '视频已失效',
+            '作品已被删除', '视频已被删除', '无法查看该作品',
+            'not found', '404', 'content not found'
+        ];
+        
+        // 先检查有效特征，如果包含则返回false
+        if (kuaishouValidPatterns.some(pattern => lowerHtml.includes(pattern))) {
+            return false;
+        }
+        
+        // 再检查失效特征
+        return kuaishouInvalidPatterns.some(pattern => lowerHtml.includes(pattern));
+    }
+    
     // 排除特定的非失效情况
     const nonDeletedPatterns = [
         '暂未支持显示图片作品', '请在移动端查看', '请使用手机端访问',
         '视频播放', '正在播放', '播放视频', 'video', '播放',
         '图片加载', '图片查看', '查看图片', 'image', 'photo',
-        '请下载', '请安装', '请打开', 'app', '客户端'
+        '请下载', '请安装', '请打开', 'app', '客户端',
+        'short-video', '短视频', 'kuaishou', '快手',
+        'user', 'profile', 'view', 'watch', 'see', 'look'
     ];
     
     // 首先检查非失效特征，如果包含则直接返回false
@@ -412,14 +440,6 @@ function isPostDeleted(html, platform) {
                        lowerHtml.includes('此作品已下架') ||
                        lowerHtml.includes('无法查看此作品') ||
                        lowerHtml.includes('作品已被删除');
-            case 'kuaishou':
-                // 快手特殊处理：不把"暂未支持显示图片作品"视为失效
-                return lowerHtml.includes('该作品已删除') || 
-                       lowerHtml.includes('作品不存在') ||
-                       lowerHtml.includes('视频已失效') ||
-                       lowerHtml.includes('作品已被删除') ||
-                       lowerHtml.includes('视频已被删除') ||
-                       lowerHtml.includes('无法查看该作品');
             case 'xiaohongshu':
                 return lowerHtml.includes('该笔记已被删除') || 
                        lowerHtml.includes('笔记不存在') ||
@@ -441,6 +461,7 @@ function isPostDeleted(html, platform) {
         }
     }
     
+    // 默认返回false，避免误判
     return false;
 }
 
