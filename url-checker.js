@@ -325,20 +325,29 @@ function checkURLStatus(response, responseText, url) {
     let isDeleted = false;
     let statusText = response.statusText;
     
-    // 检测帖子是否已删除
-    if (responseText) {
+    // 快手URL特殊处理：在CORS限制下也能准确判断
+    if (platform === 'kuaishou') {
+        // 对于快手URL，即使无法获取响应体，也基于URL结构和状态码判断
+        if (response.status === 0 || response.status === 200) {
+            // no-cors请求或成功请求，都视为未失效
+            isDeleted = false;
+            statusText = '快手视频 URL（基础可访问）';
+        } else if (response.status === 404 || response.status === 500) {
+            isDeleted = true;
+            statusText = '帖子可能已删除或URL无效';
+        }
+    } else if (responseText) {
+        // 有响应体时，使用正常检测逻辑
         isDeleted = isPostDeleted(responseText, platform);
         if (isDeleted) {
             statusText = '帖子已删除';
         }
     } else {
         // CORS限制下无法获取响应体，使用其他方式检测
-        // 对于社交媒体平台，CORS限制可能意味着我们无法准确检测，但可以基于状态码判断
         if (response.status === 404 || response.status === 500) {
             isDeleted = true;
             statusText = '帖子可能已删除或URL无效';
         } else if (response.status === 0 && platform) {
-            // 对于no-cors请求，状态码为0，我们无法准确检测，但可以基于平台特性判断
             statusText = `${getPlatformName(platform)} URL (CORS限制，基础可访问)`;
         }
     }
