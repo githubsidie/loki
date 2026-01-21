@@ -372,15 +372,32 @@ function detectPlatform(url) {
 function isPostDeleted(html, platform) {
     const lowerHtml = html.toLowerCase();
     
+    // 排除特定的非失效情况
+    const nonDeletedPatterns = [
+        '暂未支持显示图片作品', '请在移动端查看', '请使用手机端访问',
+        '视频播放', '正在播放', '播放视频', 'video', '播放',
+        '图片加载', '图片查看', '查看图片', 'image', 'photo',
+        '请下载', '请安装', '请打开', 'app', '客户端'
+    ];
+    
+    // 首先检查非失效特征，如果包含则直接返回false
+    if (nonDeletedPatterns.some(pattern => lowerHtml.includes(pattern))) {
+        return false;
+    }
+    
     // 增强的通用检测，优先使用通用特征
     const genericDeletedPatterns = [
         '已删除', '不存在', '已失效', '被删除', '无法访问',
         'content not found', 'page not found', '404', 'not found',
         '该内容已不存在', '该页面已不存在', '该帖子已不存在',
-        '此内容已被删除', '此页面已被删除', '此帖子已被删除'
+        '此内容已被删除', '此页面已被删除', '此帖子已被删除',
+        '该作品已不存在', '该视频已不存在', '该笔记已不存在',
+        '作品已下架', '视频已下架', '笔记已下架',
+        '无法查看', '无法访问', '访问受限', '权限不足',
+        '已被屏蔽', '已被隐藏', '已被关闭', '已被禁止'
     ];
     
-    // 首先检查通用特征
+    // 然后检查通用失效特征
     if (genericDeletedPatterns.some(pattern => lowerHtml.includes(pattern))) {
         return true;
     }
@@ -393,27 +410,34 @@ function isPostDeleted(html, platform) {
                        lowerHtml.includes('作品不存在') ||
                        lowerHtml.includes('视频已失效') ||
                        lowerHtml.includes('此作品已下架') ||
-                       lowerHtml.includes('无法查看此作品');
+                       lowerHtml.includes('无法查看此作品') ||
+                       lowerHtml.includes('作品已被删除');
             case 'kuaishou':
+                // 快手特殊处理：不把"暂未支持显示图片作品"视为失效
                 return lowerHtml.includes('该作品已删除') || 
                        lowerHtml.includes('作品不存在') ||
                        lowerHtml.includes('视频已失效') ||
-                       lowerHtml.includes('无法查看');
+                       lowerHtml.includes('作品已被删除') ||
+                       lowerHtml.includes('视频已被删除') ||
+                       lowerHtml.includes('无法查看该作品');
             case 'xiaohongshu':
                 return lowerHtml.includes('该笔记已被删除') || 
                        lowerHtml.includes('笔记不存在') ||
                        lowerHtml.includes('内容已删除') ||
-                       lowerHtml.includes('无法查看笔记');
+                       lowerHtml.includes('无法查看笔记') ||
+                       lowerHtml.includes('笔记已被删除');
             case 'weibo':
                 return lowerHtml.includes('该微博已被删除') || 
                        lowerHtml.includes('微博不存在') ||
                        lowerHtml.includes('内容已被删除') ||
-                       lowerHtml.includes('无法查看此微博');
+                       lowerHtml.includes('无法查看此微博') ||
+                       lowerHtml.includes('微博已被删除');
             case 'bilibili':
                 return lowerHtml.includes('视频已失效') || 
                        lowerHtml.includes('视频不存在') ||
                        lowerHtml.includes('该稿件已被删除') ||
-                       lowerHtml.includes('无法观看此视频');
+                       lowerHtml.includes('无法观看此视频') ||
+                       lowerHtml.includes('稿件已被删除');
         }
     }
     
