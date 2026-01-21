@@ -379,23 +379,38 @@ function isPostDeleted(html, platform) {
             'short-video', '短视频', 'video', '播放',
             '暂未支持显示图片作品', '请在移动端查看', '请使用手机端访问',
             'kuaishou', '快手', 'user', 'profile',
-            'view', 'watch', 'see', 'look'
+            'view', 'watch', 'see', 'look',
+            '@', '人生苦短', '及时行乐', // 添加快手视频页面常见特征
+            '关注', '分享', '不感兴趣', '举报', '评论' // 添加交互元素作为有效特征
         ];
         
         // 快手失效特征
         const kuaishouInvalidPatterns = [
             '该作品已删除', '作品不存在', '视频已失效',
             '作品已被删除', '视频已被删除', '无法查看该作品',
-            'not found', '404', 'content not found'
+            'not found', '404', 'content not found',
+            'page not found', '内容不存在', '无法找到该作品'
         ];
         
+        // 忽略的临时状态提示
+        const ignorePatterns = [
+            '无法连接网络', '请稍后再试', '网络连接失败',
+            '加载中', '正在加载', 'loading', '请稍候'
+        ];
+        
+        // 过滤掉忽略的临时状态提示
+        let filteredHtml = lowerHtml;
+        ignorePatterns.forEach(pattern => {
+            filteredHtml = filteredHtml.replace(new RegExp(pattern, 'g'), '');
+        });
+        
         // 先检查有效特征，如果包含则返回false
-        if (kuaishouValidPatterns.some(pattern => lowerHtml.includes(pattern))) {
+        if (kuaishouValidPatterns.some(pattern => filteredHtml.includes(pattern))) {
             return false;
         }
         
         // 再检查失效特征
-        return kuaishouInvalidPatterns.some(pattern => lowerHtml.includes(pattern));
+        return kuaishouInvalidPatterns.some(pattern => filteredHtml.includes(pattern));
     }
     
     // 排除特定的非失效情况
