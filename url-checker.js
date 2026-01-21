@@ -630,7 +630,7 @@ function updateProgress(current, total, statusText) {
     progressText.textContent = `${statusText} (${current}/${total})`;
 }
 
-// 读取Excel文件并保留原始数据
+// 读取Excel文件并保留原始数据，更灵活的处理逻辑
 async function readExcelFileWithOriginalData(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -653,18 +653,80 @@ async function readExcelFileWithOriginalData(file) {
                     return;
                 }
                 
-                // 识别URL列
-                const urlColumn = identifyURLColumn(jsonData);
+                let urlColumn = null;
+                let urls = [];
+                
+                // 第一步：尝试识别URL列
+                urlColumn = identifyURLColumn(jsonData);
+                
+                // 第二步：如果无法识别URL列，尝试所有列
                 if (!urlColumn) {
-                    resolve({ urls: [], originalData: [], urlColumn: null });
-                    return;
+                    // 遍历所有列，查找包含URL的列
+                    const columns = Object.keys(jsonData[0]);
+                    for (const column of columns) {
+                        const columnUrls = jsonData
+                            .map(row => row[column])
+                            .filter(value => value && typeof value === 'string' && 
+                                      (validateURL(value.trim()) || 
+                                       value.trim().includes('.com') || 
+                                       value.trim().includes('.cn') ||
+                                       value.trim().includes('http')))
+                            .map(url => url.trim());
+                            
+                        if (columnUrls.length > 0) {
+                            urlColumn = column;
+                            urls = columnUrls;
+                            break;
+                        }
+                    }
+                } else {
+                    // 提取URL并验证，放宽验证条件
+                    urls = jsonData
+                        .map(row => row[urlColumn])
+                        .filter(value => {
+                            if (!value || typeof value !== 'string') {
+                                return false;
+                            }
+                            const trimmed = value.trim();
+                            return trimmed !== '' && 
+                                  (validateURL(trimmed) || 
+                                   trimmed.includes('.com') || 
+                                   trimmed.includes('.cn') ||
+                                   trimmed.includes('http'));
+                        })
+                        .map(url => url.trim());
                 }
                 
-                // 提取URL并验证
-                const urls = jsonData
-                    .map(row => row[urlColumn])
-                    .filter(url => url && typeof url === 'string' && validateURL(url.trim()))
-                    .map(url => url.trim());
+                // 第三步：如果还是没有找到URL，尝试直接从所有单元格中提取
+                if (urls.length === 0) {
+                    // 遍历所有数据，查找URL
+                    for (const row of jsonData) {
+                        for (const key in row) {
+                            const value = row[key];
+                            if (value && typeof value === 'string') {
+                                const trimmed = value.trim();
+                                if (trimmed !== '' && 
+                                    (validateURL(trimmed) || 
+                                     trimmed.includes('.com') || 
+                                     trimmed.includes('.cn') ||
+                                     trimmed.includes('http'))) {
+                                    urls.push(trimmed);
+                                    if (!urlColumn) {
+                                        urlColumn = key;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // 第四步：如果URL没有协议，自动添加http://
+                urls = urls.map(url => {
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        return 'http://' + url;
+                    }
+                    return url;
+                });
                 
                 resolve({ urls: urls, originalData: jsonData, urlColumn: urlColumn });
             } catch (error) {
