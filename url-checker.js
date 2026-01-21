@@ -306,22 +306,32 @@ async function fetchURLWithNoCors(url) {
     }
 }
 
-// 检测URL状态和帖子状态
+// 检测URL状态和帖子状态，针对CORS限制优化
 function checkURLStatus(response, responseText, url) {
     const platform = detectPlatform(url);
     let isDeleted = false;
     let statusText = response.statusText;
     
     // 检测帖子是否已删除
-    if (platform && responseText) {
+    if (responseText) {
         isDeleted = isPostDeleted(responseText, platform);
         if (isDeleted) {
             statusText = '帖子已删除';
         }
+    } else {
+        // CORS限制下无法获取响应体，使用其他方式检测
+        // 对于社交媒体平台，CORS限制可能意味着我们无法准确检测，但可以基于状态码判断
+        if (response.status === 404 || response.status === 500) {
+            isDeleted = true;
+            statusText = '帖子可能已删除或URL无效';
+        } else if (response.status === 0 && platform) {
+            // 对于no-cors请求，状态码为0，我们无法准确检测，但可以基于平台特性判断
+            statusText = `${getPlatformName(platform)} URL (CORS限制，基础可访问)`;
+        }
     }
     
     return {
-        isValid: response.ok || response.status === 200,
+        isValid: response.ok || response.status === 200 || response.status === 0, // 允许status 0（no-cors请求）
         isDeleted: isDeleted,
         platform: platform,
         statusText: statusText
@@ -345,41 +355,56 @@ function detectPlatform(url) {
     return null;
 }
 
-// 检测帖子是否已删除
+// 检测帖子是否已删除，优化特征词检测
 function isPostDeleted(html, platform) {
     const lowerHtml = html.toLowerCase();
     
-    // 根据不同平台的特征检测帖子是否已删除
-    switch (platform) {
-        case 'douyin':
-            return lowerHtml.includes('该作品已删除') || 
-                   lowerHtml.includes('作品不存在') ||
-                   lowerHtml.includes('视频已失效') ||
-                   lowerHtml.includes('content not found');
-        case 'kuaishou':
-            return lowerHtml.includes('该作品已删除') || 
-                   lowerHtml.includes('作品不存在') ||
-                   lowerHtml.includes('视频已失效');
-        case 'xiaohongshu':
-            return lowerHtml.includes('该笔记已被删除') || 
-                   lowerHtml.includes('笔记不存在') ||
-                   lowerHtml.includes('内容已删除');
-        case 'weibo':
-            return lowerHtml.includes('该微博已被删除') || 
-                   lowerHtml.includes('微博不存在') ||
-                   lowerHtml.includes('内容已被删除');
-        case 'bilibili':
-            return lowerHtml.includes('视频已失效') || 
-                   lowerHtml.includes('视频不存在') ||
-                   lowerHtml.includes('该稿件已被删除');
-        default:
-            // 通用检测
-            return lowerHtml.includes('已删除') || 
-                   lowerHtml.includes('不存在') ||
-                   lowerHtml.includes('已失效') ||
-                   lowerHtml.includes('content not found') ||
-                   lowerHtml.includes('page not found');
+    // 增强的通用检测，优先使用通用特征
+    const genericDeletedPatterns = [
+        '已删除', '不存在', '已失效', '被删除', '无法访问',
+        'content not found', 'page not found', '404', 'not found',
+        '该内容已不存在', '该页面已不存在', '该帖子已不存在',
+        '此内容已被删除', '此页面已被删除', '此帖子已被删除'
+    ];
+    
+    // 首先检查通用特征
+    if (genericDeletedPatterns.some(pattern => lowerHtml.includes(pattern))) {
+        return true;
     }
+    
+    // 根据不同平台的特定特征检测帖子是否已删除
+    if (platform) {
+        switch (platform) {
+            case 'douyin':
+                return lowerHtml.includes('该作品已删除') || 
+                       lowerHtml.includes('作品不存在') ||
+                       lowerHtml.includes('视频已失效') ||
+                       lowerHtml.includes('此作品已下架') ||
+                       lowerHtml.includes('无法查看此作品');
+            case 'kuaishou':
+                return lowerHtml.includes('该作品已删除') || 
+                       lowerHtml.includes('作品不存在') ||
+                       lowerHtml.includes('视频已失效') ||
+                       lowerHtml.includes('无法查看');
+            case 'xiaohongshu':
+                return lowerHtml.includes('该笔记已被删除') || 
+                       lowerHtml.includes('笔记不存在') ||
+                       lowerHtml.includes('内容已删除') ||
+                       lowerHtml.includes('无法查看笔记');
+            case 'weibo':
+                return lowerHtml.includes('该微博已被删除') || 
+                       lowerHtml.includes('微博不存在') ||
+                       lowerHtml.includes('内容已被删除') ||
+                       lowerHtml.includes('无法查看此微博');
+            case 'bilibili':
+                return lowerHtml.includes('视频已失效') || 
+                       lowerHtml.includes('视频不存在') ||
+                       lowerHtml.includes('该稿件已被删除') ||
+                       lowerHtml.includes('无法观看此视频');
+        }
+    }
+    
+    return false;
 }
 
 // 显示检测结果
@@ -843,20 +868,23 @@ function identifyURLColumn(jsonData) {
     return null;
 }
 
-// 批量检测URL
+// 批量检测URL，优化并发控制和检测逻辑
 async function batchCheckURLs(urls) {
     const results = [];
     let completedCount = 0;
     const totalCount = urls.length;
     
-    // 逐个检测URL，限制并发数为5
-    const concurrencyLimit = 5;
+    // 降低并发数，避免浏览器限制，提高检测准确性
+    const concurrencyLimit = 2; // 降低到2，更符合浏览器实际并发限制
+    
     for (let i = 0; i < urls.length; i += concurrencyLimit) {
         const batch = urls.slice(i, i + concurrencyLimit);
         const batchResults = await Promise.all(
             batch.map(async (url, index) => {
                 const absoluteIndex = i + index;
                 try {
+                    // 真实检测URL，添加延迟确保准确性
+                    await new Promise(resolve => setTimeout(resolve, 100)); // 100ms延迟，避免请求过快
                     const result = await fetchURL(url);
                     results[absoluteIndex] = { url, result };
                     
@@ -865,7 +893,7 @@ async function batchCheckURLs(urls) {
                 } catch (error) {
                     const errorResult = {
                         success: false,
-                        status: 0,
+                        status: 404, // 统一使用404表示错误
                         statusText: error.message,
                         url: url,
                         isDeleted: true,
@@ -882,6 +910,11 @@ async function batchCheckURLs(urls) {
                 }
             })
         );
+        
+        // 批次之间添加延迟，避免服务器压力过大
+        if (i + concurrencyLimit < urls.length) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms批次延迟
+        }
     }
     
     return results;
