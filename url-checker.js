@@ -72,13 +72,29 @@ async function checkURL() {
     }
 }
 
-// 验证URL格式
+// 验证URL格式，支持多种格式
 function validateURL(url) {
+    if (!url || typeof url !== 'string') {
+        return false;
+    }
+    
+    const trimmedUrl = url.trim();
+    if (trimmedUrl === '') {
+        return false;
+    }
+    
     try {
-        new URL(url);
+        // 尝试直接解析
+        new URL(trimmedUrl);
         return true;
     } catch (error) {
-        return false;
+        // 如果没有协议，尝试添加http://再解析
+        try {
+            new URL('http://' + trimmedUrl);
+            return true;
+        } catch (error2) {
+            return false;
+        }
     }
 }
 
@@ -721,25 +737,45 @@ function identifyURLColumn(jsonData) {
     // 获取第一行数据的所有键
     const columns = Object.keys(jsonData[0]);
     
-    // 尝试识别URL列
+    // 关键词列表，用于匹配URL列
+    const urlKeywords = ['url', '链接', '网址', 'link', 'web', 'website', 'site', '地址', 'url地址'];
+    
+    // 第一步：尝试通过列名识别
     for (const column of columns) {
-        // 检查列名是否包含URL相关关键词
-        if (column.toLowerCase().includes('url') || column.toLowerCase().includes('链接') || column.toLowerCase().includes('网址')) {
+        const lowerColumn = column.toLowerCase();
+        // 检查列名是否包含任何URL相关关键词
+        if (urlKeywords.some(keyword => lowerColumn.includes(keyword))) {
             return column;
         }
     }
     
-    // 如果列名无法识别，检查数据内容
+    // 第二步：如果列名无法识别，检查数据内容
     for (const column of columns) {
-        // 检查前5行数据是否包含URL
-        const hasURL = jsonData.slice(0, 5).some(row => {
+        // 检查前10行数据，放宽检查条件
+        const hasURL = jsonData.slice(0, 10).some(row => {
             const value = row[column];
-            return value && typeof value === 'string' && validateURL(value.trim());
+            if (!value || typeof value !== 'string') {
+                return false;
+            }
+            
+            const trimmedValue = value.trim();
+            // 检查是否包含URL特征
+            return trimmedValue.includes('.com') || 
+                   trimmedValue.includes('.cn') || 
+                   trimmedValue.includes('.org') || 
+                   trimmedValue.includes('.net') ||
+                   trimmedValue.includes('http') ||
+                   validateURL(trimmedValue);
         });
         
         if (hasURL) {
             return column;
         }
+    }
+    
+    // 第三步：如果还是无法识别，返回第一列
+    if (columns.length > 0) {
+        return columns[0];
     }
     
     return null;
